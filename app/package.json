@@ -1,0 +1,14 @@
+{
+  "name": "rentfreely-ode-app",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "copy-forms": "node scripts/copy-forms.js",
+    "build": "npm run copy-forms",
+    "zip": "node scripts/build-zip.js"
+  },
+  "devDependencies": {
+    "adm-zip": "^0.5.9"
+  }
+}

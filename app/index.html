@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Rentfreely Uganda - Property Registration</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>🏠 Rentfreely Uganda</h1>
+        <p>Search for a location, then click on the map to place your property</p>
+    </header>
+    
+    <main>
+        <div id="search-container">
+            <input type="text" id="search-input" placeholder="Search for a location in Uganda...">
+        </div>
+        <div id="map-container">
+            <div id="map"></div>
+            <div id="location-info">
+                <p>Selected Location: <span id="coords">Not selected</span></p>
+                <button id="register-btn" disabled>Register This House</button>
+            </div>
+        </div>
+    </main>
+    
+    <footer>
+        <p>Rentfreely Uganda v1.0 - Simple Property Management</p>
+    </footer>
+
+    <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCJZZCOTkD5M21wGYbYulC4t6X-afU_osY&libraries=places&callback=initMap">
+    </script>
+    <script src="map.js"></script>
+</body>
+</html>

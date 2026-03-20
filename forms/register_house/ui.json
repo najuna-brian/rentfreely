@@ -1,0 +1,32 @@
+{
+  "type": "SwipeLayout",
+  "options": {
+    "headerTitle": "Register House",
+    "headerFields": ["name"]
+  },
+  "elements": [
+    {
+      "type": "Label",
+      "text": "<h2 style='background: #2563eb; padding: 16px; border-radius: 8px; margin-bottom: 16px; color: white'>🏠 Rentfreely - Register a Property</h2>",
+      "options": {
+        "html": true
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/photo"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/name"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/location"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/description"
+    }
+  ]
+}

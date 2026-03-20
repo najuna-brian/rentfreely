@@ -1,0 +1,41 @@
+{
+  "type": "object",
+  "properties": {
+    "photo": {
+      "type": "object",
+      "format": "photo",
+      "title": "House Photo",
+      "description": "Take a picture of the house"
+    },
+    "name": {
+      "type": "string",
+      "title": "House Name",
+      "description": "Name or title of the rental property"
+    },
+    "location": {
+      "type": "object",
+      "format": "gps",
+      "title": "Location",
+      "description": "GPS coordinates of the house (pre-filled from map)",
+      "properties": {
+        "latitude": {
+          "type": "number",
+          "title": "Latitude"
+        },
+        "longitude": {
+          "type": "number",
+          "title": "Longitude"
+        }
+      }
+    },
+    "description": {
+      "type": "string",
+      "title": "Description",
+      "description": "Additional details about the property"
+    }
+  },
+  "required": [
+    "name",
+    "location"
+  ]
+}
