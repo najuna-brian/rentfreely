@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Google Maps API Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+        .success { background: #d4edda; border-color: #c3e6cb; }
+        .error { background: #f8d7da; border-color: #f5c6cb; }
+        #map { height: 300px; width: 100%; margin: 10px 0; }
+        #location-map { height: 200px; width: 100%; margin: 10px 0; }
+        input { width: 100%; padding: 8px; margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <h1>Google Maps API Test</h1>
+    
+    <div class="test-section">
+        <h2>1. Maps Core API</h2>
+        <div id="core-status">Loading...</div>
+        <div id="map"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. Places API (Autocomplete)</h2>
+        <div id="places-status">Loading...</div>
+        <input id="address-input" placeholder="Type an address in Uganda...">
+    </div>
+    
+    <div class="test-section">
+        <h2>3. Geocoding API</h2>
+        <div id="geocoding-status">Loading...</div>
+        <div id="location-map"></div>
+        <button onclick="testGeocoding()">Test Reverse Geocoding</button>
+        <div id="geocoding-result"></div>
+    </div>
+    
+    <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCJZZCOTkD5M21wGYbYulC4t6X-afU_osY&libraries=places&callback=initTests">
+    </script>
+    
+    <script>
+        let map, locationMap;
+        
+        function initTests() {
+            console.log('Google Maps API loaded, starting tests...');
+            
+            // Test 1: Maps Core API
+            testMapsCore();
+            
+            // Test 2: Places API
+            testPlacesAPI();
+            
+            // Test 3: Geocoding API
+            testGeocodingAPI();
+        }
+        
+        function testMapsCore() {
+            try {
+                const mapElement = document.getElementById('map');
+                map = new google.maps.Map(mapElement, {
+                    center: { lat: 0.3476, lng: 32.5825 },
+                    zoom: 13
+                });
+                
+                document.getElementById('core-status').innerHTML = 
+                    '<div class="success">✅ Maps Core API: Working</div>';
+                
+                // Add a test marker
+                new google.maps.Marker({
+                    position: { lat: 0.3476, lng: 32.5825 },
+                    map: map,
+                    title: 'Test Marker - Kampala'
+                });
+                
+            } catch (error) {
+                document.getElementById('core-status').innerHTML = 
+                    '<div class="error">❌ Maps Core API: Failed - ' + error.message + '</div>';
+            }
+        }
+        
+        function testPlacesAPI() {
+            try {
+                if (!google.maps.places) {
+                    throw new Error('Places API not loaded');
+                }
+                
+                const input = document.getElementById('address-input');
+                const autocomplete = new google.maps.places.Autocomplete(input);
+                
+                autocomplete.addListener('place_changed', function() {
+                    const place = autocomplete.getPlace();
+                    if (place.geometry) {
+                        document.getElementById('places-status').innerHTML = 
+                            '<div class="success">✅ Places API: Working - Selected: ' + place.formatted_address + '</div>';
+                        
+                        // Center main map on selected place
+                        if (map) {
+                            map.panTo(place.geometry.location);
+                            map.setZoom(15);
+                        }
+                    }
+                });
+                
+                document.getElementById('places-status').innerHTML = 
+                    '<div class="success">✅ Places API: Initialized - Try typing "Kampala" in the input above</div>';
+                
+            } catch (error) {
+                document.getElementById('places-status').innerHTML = 
+                    '<div class="error">❌ Places API: Failed - ' + error.message + '</div>';
+            }
+        }
+        
+        function testGeocodingAPI() {
+            try {
+                if (!google.maps.Geocoder) {
+                    throw new Error('Geocoding API not loaded');
+                }
+                
+                // Initialize location map
+                const mapElement = document.getElementById('location-map');
+                locationMap = new google.maps.Map(mapElement, {
+                    center: { lat: 0.3476, lng: 32.5825 },
+                    zoom: 15
+                });
+                
+                document.getElementById('geocoding-status').innerHTML = 
+                    '<div class="success">✅ Geocoding API: Initialized - Click the button to test</div>';
+                
+            } catch (error) {
+                document.getElementById('geocoding-status').innerHTML = 
+                    '<div class="error">❌ Geocoding API: Failed - ' + error.message + '</div>';
+            }
+        }
+        
+        function testGeocoding() {
+            if (!google.maps.Geocoder) {
+                document.getElementById('geocoding-result').innerHTML = 
+                    '<div class="error">Geocoding API not available</div>';
+                return;
+            }
+            
+            const geocoder = new google.maps.Geocoder();
+            
+            // Test reverse geocoding for Kampala center
+            geocoder.geocode({ location: { lat: 0.3476, lng: 32.5825 } }, function(results, status) {
+                const resultDiv = document.getElementById('geocoding-result');
+                
+                if (status === 'OK' && results[0]) {
+                    resultDiv.innerHTML = 
+                        '<div class="success">✅ Reverse Geocoding: ' + results[0].formatted_address + '</div>';
+                    
+                    // Add marker to location map
+                    if (locationMap) {
+                        new google.maps.Marker({
+                            position: { lat: 0.3476, lng: 32.5825 },
+                            map: locationMap,
+                            title: results[0].formatted_address
+                        });
+                    }
+                } else {
+                    resultDiv.innerHTML = 
+                        '<div class="error">❌ Reverse Geocoding failed: ' + status + '</div>';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

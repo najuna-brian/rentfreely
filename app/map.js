@@ -287,47 +287,63 @@ function initializeMainApp() {
 
 // Initialize Google Maps
 function initializeMap() {
+    // Check if Google Maps API is loaded
+    if (!window.google || !google.maps) {
+        console.error('Google Maps API not loaded');
+        showSnackbar('Map unavailable. Please check your connection.', 'error');
+        return;
+    }
+    
     const mapElement = document.getElementById('map');
+    if (!mapElement) {
+        console.error('Map element not found');
+        return;
+    }
     
     // Default center (Kampala)
     const center = userLocation || { lat: 0.3476, lng: 32.5825 };
     const zoom = userLocation ? 15 : 13;
     
-    map = new google.maps.Map(mapElement, {
-        center: center,
-        zoom: zoom,
-        styles: [
-            {
-                featureType: "all",
-                elementType: "geometry",
-                stylers: [{ color: "#EAE6DE" }]
-            },
-            {
-                featureType: "road",
-                elementType: "geometry",
-                stylers: [{ color: "#FFFFFF" }]
-            },
-            {
-                featureType: "water",
-                elementType: "geometry",
-                stylers: [{ color: "#C5D8E8" }]
-            },
-            {
-                featureType: "landscape.man_made",
-                elementType: "geometry",
-                stylers: [{ color: "#DDD8CE" }]
-            },
-            {
-                featureType: "poi",
-                elementType: "labels",
-                stylers: [{ visibility: "off" }]
-            }
-        ],
-        gestureHandling: 'greedy',
-        disableDefaultUI: true
-    });
-    
-    console.log('Map initialized');
+    try {
+        map = new google.maps.Map(mapElement, {
+            center: center,
+            zoom: zoom,
+            styles: [
+                {
+                    featureType: "all",
+                    elementType: "geometry",
+                    stylers: [{ color: "#EAE6DE" }]
+                },
+                {
+                    featureType: "road",
+                    elementType: "geometry",
+                    stylers: [{ color: "#FFFFFF" }]
+                },
+                {
+                    featureType: "water",
+                    elementType: "geometry",
+                    stylers: [{ color: "#C5D8E8" }]
+                },
+                {
+                    featureType: "landscape.man_made",
+                    elementType: "geometry",
+                    stylers: [{ color: "#DDD8CE" }]
+                },
+                {
+                    featureType: "poi",
+                    elementType: "labels",
+                    stylers: [{ visibility: "off" }]
+                }
+            ],
+            gestureHandling: 'greedy',
+            disableDefaultUI: true
+        });
+        
+        console.log('Main map initialized successfully');
+    } catch (error) {
+        console.error('Failed to initialize main map:', error);
+        showSnackbar('Failed to load map. Please refresh the page.', 'error');
+    }
 }
 
 // Load Properties
@@ -445,45 +461,53 @@ function displayProperties() {
         const position = { lat: data.location.latitude, lng: data.location.longitude };
         
         // Create price marker
-        const marker = createPriceMarker(position, data, listing);
-        marker.setMap(map);
-        propertyMarkers.push(marker);
+        const marker = createPriceMarker(position, data, listing, index);
+        if (marker) {
+            marker.setMap(map);
+            propertyMarkers.push(marker);
+        }
     });
 }
 
 // Create Price Marker
-function createPriceMarker(position, data, listing) {
-    const marker = new google.maps.Marker({
-        position: position,
-        map: map,
-        title: data.name || `Property ${index + 1}`,
-        icon: {
-            url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-                <div style="
-                    background: white;
-                    border: 1.5px solid #E0E0D8;
-                    border-radius: 20px;
-                    padding: 4px 10px;
-                    font-size: 11px;
-                    font-weight: 700;
-                    color: black;
-                    white-space: nowrap;
-                    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-family: 'DM Sans', sans-serif;
-                ">UGX ${formatPrice(data.rent_price)}</div>
-            `),
-            anchor: new google.maps.Point(40, 20)
-        }
-    });
-    
-    marker.addListener('click', () => {
-        selectProperty(listing, marker);
-    });
-    
-    return marker;
+function createPriceMarker(position, data, listing, index) {
+    try {
+        const marker = new google.maps.Marker({
+            position: position,
+            map: map,
+            title: data.name || `Property ${index + 1}`,
+            icon: {
+                url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                    <div style="
+                        background: white;
+                        border: 1.5px solid #E0E0D8;
+                        border-radius: 20px;
+                        padding: 4px 10px;
+                        font-size: 11px;
+                        font-weight: 700;
+                        color: black;
+                        white-space: nowrap;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-family: 'DM Sans', sans-serif;
+                    ">UGX ${formatPrice(data.rent_price)}</div>
+                `),
+                anchor: new google.maps.Point(40, 20)
+            }
+        });
+        
+        marker.addListener('click', () => {
+            selectProperty(listing, marker);
+        });
+        
+        return marker;
+    } catch (error) {
+        console.error('Failed to create marker for property:', error);
+        showSnackbar('Failed to display property on map.', 'error');
+        return null;
+    }
 }
 
 // Format Price
@@ -877,47 +901,88 @@ function initializeAddListingFlow() {
 
 // Initialize Location Step
 function initializeLocationStep() {
+    // Check if Google Maps API is available
+    if (!window.google || !google.maps) {
+        console.error('Google Maps API not available for location step');
+        showSnackbar('Map unavailable. Please check your connection.', 'error');
+        return;
+    }
+    
     // Initialize location map
     if (!locationMap) {
         const mapElement = document.getElementById('location-map');
-        locationMap = new google.maps.Map(mapElement, {
-            center: { lat: 0.3476, lng: 32.5825 },
-            zoom: 15,
-            styles: [
-                {
-                    featureType: "all",
-                    elementType: "geometry",
-                    stylers: [{ color: "#EAE6DE" }]
-                },
-                {
-                    featureType: "road",
-                    elementType: "geometry",
-                    stylers: [{ color: "#FFFFFF" }]
-                }
-            ],
-            gestureHandling: 'greedy',
-            disableDefaultUI: true
-        });
+        if (!mapElement) {
+            console.error('Location map element not found');
+            return;
+        }
         
-        // Add click listener to place marker
-        locationMap.addListener('click', function(event) {
-            placeDraggableMarker(event.latLng);
-        });
+        try {
+            locationMap = new google.maps.Map(mapElement, {
+                center: { lat: 0.3476, lng: 32.5825 },
+                zoom: 15,
+                styles: [
+                    {
+                        featureType: "all",
+                        elementType: "geometry",
+                        stylers: [{ color: "#EAE6DE" }]
+                    },
+                    {
+                        featureType: "road",
+                        elementType: "geometry",
+                        stylers: [{ color: "#FFFFFF" }]
+                    }
+                ],
+                gestureHandling: 'greedy',
+                disableDefaultUI: true
+            });
+            
+            // Add click listener to place marker
+            locationMap.addListener('click', function(event) {
+                placeDraggableMarker(event.latLng);
+            });
+            
+            console.log('Location map initialized successfully');
+        } catch (error) {
+            console.error('Failed to initialize location map:', error);
+            showSnackbar('Failed to load location map.', 'error');
+        }
     }
     
     // Setup address search
     const addressInput = document.getElementById('address-search');
-    const autocomplete = new google.maps.places.Autocomplete(addressInput);
+    if (!addressInput) {
+        console.error('Address search input not found');
+        return;
+    }
     
-    autocomplete.addListener('place_changed', function() {
-        const place = autocomplete.getPlace();
-        if (place.geometry) {
-            locationMap.panTo(place.geometry.location);
-            locationMap.setZoom(16);
-            placeDraggableMarker(place.geometry.location);
-            addressInput.value = place.formatted_address || place.name;
-        }
-    });
+    // Check if Places API is available
+    if (!google.maps.places) {
+        console.error('Google Places API not available');
+        showSnackbar('Address search unavailable.', 'error');
+        return;
+    }
+    
+    try {
+        const autocomplete = new google.maps.places.Autocomplete(addressInput);
+        
+        autocomplete.addListener('place_changed', function() {
+            const place = autocomplete.getPlace();
+            if (place.geometry) {
+                locationMap.panTo(place.geometry.location);
+                locationMap.setZoom(16);
+                placeDraggableMarker(place.geometry.location);
+                addressInput.value = place.formatted_address || place.name;
+            } else {
+                console.warn('Place selected but no geometry available');
+                showSnackbar('Please select a valid location from the suggestions.', 'error');
+            }
+        });
+        
+        console.log('Places autocomplete initialized successfully');
+    } catch (error) {
+        console.error('Failed to initialize Places autocomplete:', error);
+        showSnackbar('Address search failed to initialize.', 'error');
+    }
     
     // Setup confirm button
     const confirmBtn = document.getElementById('confirm-location-btn');
@@ -945,40 +1010,41 @@ function initializeLocationStep() {
 
 // Place Draggable Marker
 function placeDraggableMarker(location) {
-    // Remove existing marker
-    if (draggableMarker) {
-        draggableMarker.setMap(null);
-    }
-    
-    // Create new draggable marker
-    draggableMarker = new google.maps.Marker({
-        position: location,
-        map: locationMap,
-        draggable: true,
-        icon: {
-            url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-                <div style="
-                    width: 44px;
-                    height: 44px;
-                    border-radius: 50% 50% 50% 4px;
-                    background: #0A0A0A;
-                    border: 3px solid white;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    transform: rotate(-45deg);
-                    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
-                ">
-                    <span style="
-                        font-size: 20px;
-                        transform: rotate(45deg);
-                        color: white;
-                    ">🏠</span>
-                </div>
-            `),
-            anchor: new google.maps.Point(22, 44)
+    try {
+        // Remove existing marker
+        if (draggableMarker) {
+            draggableMarker.setMap(null);
         }
-    });
+        
+        // Create new draggable marker
+        draggableMarker = new google.maps.Marker({
+            position: location,
+            map: locationMap,
+            draggable: true,
+            icon: {
+                url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                    <div style="
+                        width: 44px;
+                        height: 44px;
+                        border-radius: 50% 50% 50% 4px;
+                        background: #0A0A0A;
+                        border: 3px solid white;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        transform: rotate(-45deg);
+                        filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+                    ">
+                        <span style="
+                            font-size: 20px;
+                            transform: rotate(45deg);
+                            color: white;
+                        ">🏠</span>
+                    </div>
+                `),
+                anchor: new google.maps.Point(22, 44)
+            }
+        });
     
     // Update location data
     addListingData.location = {
@@ -1003,19 +1069,61 @@ function placeDraggableMarker(location) {
     
     // Get address for initial placement
     reverseGeocode(location);
+    
+    } catch (error) {
+        console.error('Failed to place draggable marker:', error);
+        showSnackbar('Failed to place location marker.', 'error');
+    }
 }
 
 // Reverse Geocode
 function reverseGeocode(location) {
-    const geocoder = new google.maps.Geocoder();
+    // Check if Geocoding API is available
+    if (!google.maps.Geocoder) {
+        console.error('Google Geocoding API not available');
+        showSnackbar('Address lookup unavailable.', 'error');
+        return;
+    }
     
-    geocoder.geocode({ location: location }, function(results, status) {
-        if (status === 'OK' && results[0]) {
-            addListingData.address = results[0].formatted_address;
-            document.getElementById('address-search').value = results[0].formatted_address;
-            document.getElementById('confirm-address').textContent = results[0].formatted_address;
-        }
-    });
+    try {
+        const geocoder = new google.maps.Geocoder();
+        
+        geocoder.geocode({ location: location }, function(results, status) {
+            if (status === 'OK' && results && results[0]) {
+                addListingData.address = results[0].formatted_address;
+                const addressInput = document.getElementById('address-search');
+                const confirmAddress = document.getElementById('confirm-address');
+                
+                if (addressInput) {
+                    addressInput.value = results[0].formatted_address;
+                }
+                if (confirmAddress) {
+                    confirmAddress.textContent = results[0].formatted_address;
+                }
+                
+                console.log('Reverse geocoding successful:', results[0].formatted_address);
+            } else {
+                console.warn('Geocoding failed:', status);
+                showSnackbar('Unable to find address for this location.', 'error');
+                
+                // Set a generic address
+                const genericAddress = `${location.lat().toFixed(6)}, ${location.lng().toFixed(6)}`;
+                addListingData.address = genericAddress;
+                const addressInput = document.getElementById('address-search');
+                const confirmAddress = document.getElementById('confirm-address');
+                
+                if (addressInput) {
+                    addressInput.value = genericAddress;
+                }
+                if (confirmAddress) {
+                    confirmAddress.textContent = genericAddress;
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Geocoding error:', error);
+        showSnackbar('Address lookup failed.', 'error');
+    }
 }
 
 // Show Location Confirmed
@@ -1334,8 +1442,26 @@ function deleteListing(index) {
 
 // Google Maps Callback
 function initMaps() {
-    console.log('Google Maps API loaded');
-    // Map initialization happens in initializeMainApp()
+    console.log('Google Maps API loaded successfully');
+    
+    // Verify all required APIs are available
+    if (!google.maps) {
+        console.error('Google Maps core not available');
+        showSnackbar('Maps API failed to load properly.', 'error');
+        return;
+    }
+    
+    if (!google.maps.places) {
+        console.error('Google Places API not available');
+        showSnackbar('Places API not available. Address search will be limited.', 'error');
+    }
+    
+    if (!google.maps.Geocoder) {
+        console.error('Google Geocoding API not available');
+        showSnackbar('Geocoding API not available. Address lookup will be limited.', 'error');
+    }
+    
+    console.log('All Google Maps APIs verified and ready');
 }
 
 // Start the app when DOM is ready
