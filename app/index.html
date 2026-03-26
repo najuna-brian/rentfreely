@@ -1,35 +1,309 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Rentfreely Uganda - Property Registration</title>
+    <title>Rentfreely Uganda</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header>
-        <h1>🏠 Rentfreely Uganda</h1>
-        <p>Search for a location, then click on the map to place your property</p>
-    </header>
-    
-    <main>
-        <div id="search-container">
-            <input type="text" id="search-input" placeholder="Search for a location in Uganda...">
+    <!-- Splash Screen -->
+    <div id="splash-screen" class="screen">
+        <div class="splash-content">
+            <h1 class="app-name">Rentfreely Uganda</h1>
+            <p class="tagline">Find your space. List your place.</p>
+            <div class="version">v1.0</div>
         </div>
-        <div id="map-container">
-            <div id="map"></div>
-            <div id="location-info">
-                <p>Selected Location: <span id="coords">Not selected</span></p>
-                <button id="register-btn" disabled>Register This House</button>
+    </div>
+
+    <!-- Onboarding: Mode Selection -->
+    <div id="onboarding-screen" class="screen hidden">
+        <div class="onboarding-content">
+            <h2 class="onboarding-title">I am a…</h2>
+            <p class="onboarding-subtitle">You can switch anytime from the menu.</p>
+            <div class="mode-cards">
+                <div class="mode-card" data-mode="tenant">
+                    <div class="mode-icon">🔍</div>
+                    <h3>Tenant</h3>
+                    <p>I'm looking for a place to rent.</p>
+                </div>
+                <div class="mode-card" data-mode="landlord">
+                    <div class="mode-icon">🏠</div>
+                    <h3>Landlord</h3>
+                    <p>I have a property to rent out.</p>
+                </div>
+            </div>
+            <button id="continue-btn" class="continue-btn" disabled>Continue</button>
+        </div>
+    </div>
+
+    <!-- Location Permission -->
+    <div id="permission-screen" class="screen hidden">
+        <div class="permission-modal">
+            <div class="permission-icon">�</div>
+            <h3>Know where you are</h3>
+            <p>Allowing location lets us centre the map on your area so you can find nearby rentals instantly.</p>
+            <div class="permission-buttons">
+                <button id="allow-location-btn" class="primary-btn">Allow Location</button>
+                <button id="skip-location-btn" class="secondary-btn">Not now</button>
             </div>
         </div>
-    </main>
-    
-    <footer>
-        <p>Rentfreely Uganda v1.0 - Simple Property Management</p>
-    </footer>
+    </div>
+
+    <!-- Main App -->
+    <div id="main-app" class="screen hidden">
+        <!-- Search Bar -->
+        <div class="search-container">
+            <div class="search-bar">
+                <div class="search-icon">�</div>
+                <input type="text" id="search-input" placeholder="Search area, street, neighbourhood…">
+                <div class="mode-chip" id="mode-chip">Tenant</div>
+            </div>
+        </div>
+
+        <!-- 3-dot Menu -->
+        <div class="menu-container">
+            <button id="menu-toggle" class="menu-btn">⋮</button>
+            <div id="mode-menu" class="mode-menu hidden">
+                <div class="menu-header">
+                    <div class="current-mode-label">Current mode</div>
+                    <div class="current-mode-name" id="current-mode-name">🔍 Tenant</div>
+                </div>
+                <div class="menu-divider"></div>
+                <div id="switch-mode-item" class="menu-item">
+                    <span class="menu-icon">⇄</span>
+                    <span>Switch to Landlord</span>
+                </div>
+                <div class="menu-divider"></div>
+                <div class="menu-item">
+                    <span class="menu-icon">🔄</span>
+                    <span>Sync data</span>
+                </div>
+                <div class="menu-item">
+                    <span class="menu-icon">ℹ️</span>
+                    <span>About Rental App</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Map Container -->
+        <div class="map-container">
+            <div id="map"></div>
+            
+            <!-- Landlord Mode Banner -->
+            <div id="landlord-banner" class="landlord-banner hidden">
+                🏠 LANDLORD MODE — Manage your properties
+            </div>
+
+            <!-- Listing Count -->
+            <div id="listing-count" class="listing-count hidden">
+                <span id="listing-count-text">0 listings</span>
+            </div>
+
+            <!-- My Location Button -->
+            <button id="my-location-btn" class="my-location-btn">
+                📍
+            </button>
+
+            <!-- Landlord FABs -->
+            <div id="landlord-fabs" class="fab-container hidden">
+                <button id="view-listings-btn" class="fab secondary-fab">
+                    📋
+                    <span class="fab-label">My listings</span>
+                </button>
+                <button id="add-property-btn" class="fab primary-fab">
+                    +
+                    <span class="fab-label">Add property</span>
+                </button>
+            </div>
+
+            <!-- No Listings Overlay -->
+            <div id="no-listings-overlay" class="overlay hidden">
+                <div class="overlay-card">
+                    <div class="overlay-icon">🔍</div>
+                    <h3>No properties nearby</h3>
+                    <p>Search or move the map to find rentals</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Sheet Container -->
+        <div id="bottom-sheet" class="bottom-sheet hidden">
+            <!-- Dynamic content will be inserted here -->
+        </div>
+    </div>
+
+    <!-- Add Listing Flow Screens -->
+    <div id="add-listing-flow" class="screen hidden">
+        <!-- Step 1: Location -->
+        <div id="add-location-step" class="add-listing-step hidden">
+            <div class="step-header">
+                <button class="back-btn">←</button>
+                <div class="step-title">
+                    <h2>List Your Property</h2>
+                    <p>Step 1 of 3 — Location</p>
+                </div>
+            </div>
+            <div class="stepper">
+                <div class="step active">Location</div>
+                <div class="step">Details</div>
+                <div class="step">Contact</div>
+            </div>
+            <div class="location-form">
+                <div class="address-input">
+                    <span class="input-icon">📍</span>
+                    <input type="text" id="address-search" placeholder="Type an address or place name…">
+                </div>
+                <p class="helper-text">Then drag the pin to the exact entrance or gate of your property</p>
+                <div id="location-map" class="location-map"></div>
+                <div id="tap-hint" class="tap-hint">Tap the map to place your property</div>
+                <div id="location-confirm" class="location-confirm hidden">
+                    <div class="confirm-address" id="confirm-address"></div>
+                    <div class="confirm-buttons">
+                        <button id="reset-location-btn" class="secondary-btn">Reset</button>
+                        <button id="confirm-location-btn" class="primary-btn">Confirm this location ✓</button>
+                    </div>
+                </div>
+            </div>
+            <button id="continue-to-details-btn" class="continue-btn disabled" disabled>Continue to Details →</button>
+        </div>
+
+        <!-- Step 2: Details -->
+        <div id="add-details-step" class="add-listing-step hidden">
+            <div class="step-header">
+                <button class="back-btn">←</button>
+                <div class="step-title">
+                    <h2>List Your Property</h2>
+                    <p>Step 2 of 3 — Details</p>
+                </div>
+            </div>
+            <div class="stepper">
+                <div class="step completed">Location</div>
+                <div class="step active">Details</div>
+                <div class="step">Contact</div>
+            </div>
+            <div class="details-form">
+                <div class="form-group">
+                    <label>Property title</label>
+                    <input type="text" id="property-title" placeholder="e.g. Modern 2-Bedroom in Kololo" maxlength="80">
+                </div>
+                <div class="form-group">
+                    <label>Monthly rent (UGX)</label>
+                    <div class="input-with-prefix">
+                        <span class="prefix">UGX</span>
+                        <input type="number" id="monthly-rent" placeholder="e.g. 800000">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Bedrooms</label>
+                        <select id="bedrooms">
+                            <option value="">Select</option>
+                            <option value="1">1 bedroom</option>
+                            <option value="2">2 bedrooms</option>
+                            <option value="3">3 bedrooms</option>
+                            <option value="4">4 bedrooms</option>
+                            <option value="5">5 bedrooms</option>
+                            <option value="6">6 bedrooms</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Bathrooms</label>
+                        <select id="bathrooms">
+                            <option value="">Select</option>
+                            <option value="1">1 bathroom</option>
+                            <option value="2">2 bathrooms</option>
+                            <option value="3">3 bathrooms</option>
+                            <option value="4">4 bathrooms</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Property type</label>
+                    <select id="property-type">
+                        <option value="">Select</option>
+                        <option value="Apartment">Apartment</option>
+                        <option value="House">House</option>
+                        <option value="Studio">Studio</option>
+                        <option value="Villa">Villa</option>
+                        <option value="Commercial">Commercial</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Available from</label>
+                    <input type="date" id="available-from">
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="property-description" rows="4" placeholder="Describe the property — key features, amenities, neighbourhood…" maxlength="600"></textarea>
+                </div>
+            </div>
+            <button id="continue-to-contact-btn" class="continue-btn disabled" disabled>Continue to Contact →</button>
+        </div>
+
+        <!-- Step 3: Contact & Review -->
+        <div id="add-contact-step" class="add-listing-step hidden">
+            <div class="step-header">
+                <button class="back-btn">←</button>
+                <div class="step-title">
+                    <h2>List Your Property</h2>
+                    <p>Step 3 of 3 — Contact & Review</p>
+                </div>
+            </div>
+            <div class="stepper">
+                <div class="step completed">Location</div>
+                <div class="step completed">Details</div>
+                <div class="step active">Contact</div>
+            </div>
+            <div class="contact-form">
+                <div class="review-card">
+                    <h3>Review</h3>
+                    <div id="review-summary"></div>
+                </div>
+                <div class="form-group">
+                    <label>Your name</label>
+                    <input type="text" id="landlord-name" placeholder="Full name for tenants to see">
+                </div>
+                <div class="form-group">
+                    <label>Phone number</label>
+                    <input type="tel" id="landlord-phone" placeholder="+256 700 000000">
+                    <p class="helper-text">Tenants will call or WhatsApp this number</p>
+                </div>
+                <div class="info-note">
+                    After submitting, your listing saves locally and syncs to the server when connected.
+                </div>
+            </div>
+            <button id="publish-listing-btn" class="publish-btn disabled" disabled>Publish Listing ✓</button>
+        </div>
+    </div>
+
+    <!-- My Listings Sheet -->
+    <div id="my-listings-sheet" class="bottom-sheet my-listings-sheet hidden">
+        <div class="sheet-header">
+            <h3>My Listings</h3>
+            <span id="listings-count">0 active properties</span>
+            <button class="close-btn">×</button>
+        </div>
+        <div id="listings-content" class="listings-content">
+            <!-- Dynamic content -->
+        </div>
+        <button class="add-new-btn">Add new property</button>
+    </div>
+
+    <!-- About Modal -->
+    <div id="about-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>Rentfreely Uganda</h2>
+            <div class="version-info">v1.0 • Built March 2026</div>
+            <p>Find your perfect rental or list your property with ease.</p>
+            <div class="powered-by">
+                Powered by Open Data Ensemble (ODE)
+            </div>
+            <button class="modal-close-btn">Close</button>
+        </div>
+    </div>
 
     <script async defer
-        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCJZZCOTkD5M21wGYbYulC4t6X-afU_osY&libraries=places&callback=initMap">
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCJZZCOTkD5M21wGYbYulC4t6X-afU_osY&libraries=places&callback=initMaps">
     </script>
     <script src="map.js"></script>
 </body>

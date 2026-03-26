@@ -22,11 +22,42 @@
     },
     {
       "type": "Control",
+      "scope": "#/properties/property_type"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/rent_price"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/bedrooms"
+    },
+    {
+      "type": "Control",
       "scope": "#/properties/location"
     },
     {
       "type": "Control",
       "scope": "#/properties/description"
+    },
+    {
+      "type": "Label",
+      "text": "<h3 style='background: #f1f5f9; padding: 12px; border-radius: 8px; margin-top: 8px; color: #334155'>👤 Landlord Contact Information</h3>",
+      "options": {
+        "html": true
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/landlord_name"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/landlord_phone"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/available"
     }
   ]
 }

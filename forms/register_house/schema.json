@@ -12,6 +12,22 @@
       "title": "House Name",
       "description": "Name or title of the rental property"
     },
+    "property_type": {
+      "type": "string",
+      "title": "Property Type",
+      "enum": ["Single Room", "Double Room", "1 Bedroom", "2 Bedroom", "3 Bedroom", "Full House"],
+      "description": "Type of rental property"
+    },
+    "rent_price": {
+      "type": "number",
+      "title": "Monthly Rent (UGX)",
+      "description": "Monthly rent in Uganda Shillings"
+    },
+    "bedrooms": {
+      "type": "number",
+      "title": "Number of Bedrooms",
+      "description": "Number of bedrooms in the property"
+    },
     "location": {
       "type": "object",
       "format": "gps",
@@ -32,10 +48,29 @@
       "type": "string",
       "title": "Description",
       "description": "Additional details about the property"
+    },
+    "landlord_name": {
+      "type": "string",
+      "title": "Landlord Name",
+      "description": "Name of the property owner"
+    },
+    "landlord_phone": {
+      "type": "string",
+      "title": "Landlord Phone",
+      "description": "Phone number tenants can call or WhatsApp"
+    },
+    "available": {
+      "type": "boolean",
+      "title": "Currently Available",
+      "description": "Is this property currently available for rent?",
+      "default": true
     }
   },
   "required": [
     "name",
-    "location"
+    "location",
+    "landlord_name",
+    "landlord_phone",
+    "rent_price"
   ]
 }
