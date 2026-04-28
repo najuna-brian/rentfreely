@@ -1,10 +1,10 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ExploreScreen } from '../screens/ExploreScreen';
+import { FavoritesScreen } from '../screens/FavoritesScreen';
+import { ListScreen } from '../screens/ListScreen';
 import { ListingDetailScreen } from '../screens/ListingDetailScreen';
-import { PostListingScreen } from '../screens/PostListingScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
-import { SavedScreen } from '../screens/SavedScreen';
 
 export type RootStackParamList = {
   MainTabs: undefined;
@@ -13,8 +13,8 @@ export type RootStackParamList = {
 
 export type MainTabParamList = {
   Explore: undefined;
-  Saved: undefined;
-  Post: undefined;
+  List: undefined;
+  Favorites: undefined;
   Profile: undefined;
 };
 
@@ -25,8 +25,8 @@ function MainTabs() {
   return (
     <Tab.Navigator screenOptions={{ headerShown: false }}>
       <Tab.Screen name="Explore" component={ExploreScreen} />
-      <Tab.Screen name="Saved" component={SavedScreen} />
-      <Tab.Screen name="Post" component={PostListingScreen} />
+      <Tab.Screen name="List" component={ListScreen} />
+      <Tab.Screen name="Favorites" component={FavoritesScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );

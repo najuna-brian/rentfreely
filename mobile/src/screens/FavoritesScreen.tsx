@@ -8,7 +8,7 @@ import { RootStackParamList } from '../navigation/AppNavigator';
 
 const ugx = new Intl.NumberFormat('en-UG');
 
-export function SavedScreen() {
+export function FavoritesScreen() {
   const { width } = useWindowDimensions();
   const isTablet = width >= 900;
   const { user } = useAuth();
@@ -23,15 +23,15 @@ export function SavedScreen() {
   if (!user) {
     return (
       <View style={styles.container}>
-        <Text style={styles.title}>Saved listings</Text>
-        <Text style={styles.message}>Sign in from Profile to save and view favorites.</Text>
+        <Text style={styles.title}>Favorites</Text>
+        <Text style={styles.message}>Sign in from Profile to save and view favorite homes.</Text>
       </View>
     );
   }
 
   return (
     <View style={[styles.container, isTablet && styles.containerWide]}>
-      <Text style={styles.title}>Saved listings</Text>
+      <Text style={styles.title}>Favorites</Text>
       <FlatList
         data={favoritesQuery.data ?? []}
         keyExtractor={(item) => item.id}
@@ -48,7 +48,7 @@ export function SavedScreen() {
         )}
         ListEmptyComponent={
           <Text style={styles.message}>
-            {favoritesQuery.isLoading ? 'Loading saved listings...' : 'No saved listings yet.'}
+            {favoritesQuery.isLoading ? 'Loading favorite homes...' : 'No favorite homes yet.'}
           </Text>
         }
       />
