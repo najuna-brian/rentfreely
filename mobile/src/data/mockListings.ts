@@ -1,0 +1,43 @@
+import { Listing } from '../types/listing';
+
+export const mockListings: Listing[] = [
+  {
+    id: '1',
+    title: 'Modern 2BR Apartment in Ntinda',
+    priceUgx: 1200000,
+    bedrooms: 2,
+    bathrooms: 2,
+    propertyType: 'Apartment',
+    furnished: true,
+    district: 'Kampala',
+    address: 'Ntinda, Kampala',
+    latitude: 0.3527,
+    longitude: 32.6176,
+  },
+  {
+    id: '2',
+    title: 'Affordable Studio in Mbarara',
+    priceUgx: 450000,
+    bedrooms: 1,
+    bathrooms: 1,
+    propertyType: 'Room',
+    furnished: false,
+    district: 'Mbarara',
+    address: 'Mbarara City Centre',
+    latitude: -0.6072,
+    longitude: 30.6545,
+  },
+  {
+    id: '3',
+    title: 'Family 3BR Home in Gulu',
+    priceUgx: 900000,
+    bedrooms: 3,
+    bathrooms: 2,
+    propertyType: 'House',
+    furnished: false,
+    district: 'Gulu',
+    address: 'Pece, Gulu',
+    latitude: 2.7724,
+    longitude: 32.2881,
+  },
+];

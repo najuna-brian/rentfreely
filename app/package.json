@@ -1,14 +1,26 @@
 {
-  "name": "rentfreely-ode-app",
-  "version": "1.0.0",
+  "name": "rentfreely-app",
   "private": true,
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "copy-forms": "node scripts/copy-forms.js",
-    "build": "npm run copy-forms",
-    "zip": "node scripts/build-zip.js"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@googlemaps/markerclusterer": "^2.5.3",
+    "lucide-react": "^1.7.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.14.1",
+    "zustand": "^4.5.2"
   },
   "devDependencies": {
-    "adm-zip": "^0.5.9"
+    "@vitejs/plugin-react": "^4.0.0",
+    "autoprefixer": "^10.4.14",
+    "postcss": "^8.4.24",
+    "tailwindcss": "^3.3.2",
+    "vite": "^4.5.1"
   }
 }

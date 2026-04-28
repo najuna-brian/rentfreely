@@ -1,58 +1,94 @@
-# Rentfreely v1.0 - Simple Property Registration App
+# RentFreely — ODE-Powered Rental App
 
-A minimal ODE custom app for registering rental properties with Google Maps integration.
+A map-centric rental listing app for Uganda, built as a custom app on the Open Data Ensemble (ODE) platform.
 
-## Features
+## Architecture
 
-- **Interactive Google Maps**: Click to select property location
-- **House Registration Form**: Collect photo, name, and GPS coordinates
-- **Mobile-Friendly**: Responsive design for field use
-- **Simple v1.0 Design**: Following ODE tutorial patterns
+- **Frontend**: Vite + React + TailwindCSS (custom app bundle)
+- **Backend**: Synkronus (Go + PostgreSQL) — uses existing observations table
+- **Mobile**: Formulus React Native shell (rebranded to RentFreely)
+- **Maps**: Google Maps JS API (free tier)
+- **Auth**: JWT via Synkronus
+- **Storage**: Synkronus attachment service
+- **Sync**: Built-in version-based sync
 
-## Structure
+## Development
+
+```bash
+# Frontend dev
+cd app
+npm install
+npm run dev
+# Open http://localhost:5173
+
+# Backend (Synkronus)
+cd ../../ode
+docker compose up -d
+# API at http://localhost:8080
+```
+
+## Project Structure
 
 ```
-rentfreely-v1.0.0/
-├── app/
-│   ├── index.html          # Main page with Google Maps
-│   ├── style.css          # Modern styling
-│   └── map.js             # Google Maps functionality
-└── forms/
-    └── register_house/
-        ├── schema.json    # House registration data structure
-        └── ui.json        # Form UI layout
+rentfreely/
+├── app/                    # Vite React app
+│   ├── src/
+│   │   ├── screens/       # Main screens
+│   │   ├── components/    # Reusable UI
+│   │   ├── stores/        # Zustand state
+│   │   ├── services/      # API & utilities
+│   │   └── utils/         # Helpers
+│   ├── public/
+│   │   ├── app.config.json  # ODE app config
+│   │   └── formulus-load.js # Bridge loader
+│   └── package.json
+├── forms/                  # JSON Schema forms (optional)
+├── bundle/                 # Built output
+└── deploy.sh              # Build & upload script
 ```
 
-## Form Fields
+## Key Features
 
-- **Photo**: House image (ODE photo type)
-- **Name**: House name/title (required)
-- **Location**: GPS coordinates (auto-filled from map click)
-- **Description**: Optional property details
+- **Map-based browsing** with price pins
+- **Property listings** with photos, amenities, location
+- **Direct WhatsApp contact** to landlords
+- **Offline-first** with sync
+- **Multi-role**: Tenant, Landlord, Agent
+- **No external services** — everything runs on ODE
 
-## Usage
+## Data Model
 
-1. Click on the map to select a property location
-2. Click "Register This House" to open the registration form
-3. Fill in property details and upload photo
-4. Submit to save the property data
+All data stored as `observations` in Synkronus:
+
+- `user_profile` — User info and roles
+- `property_listing` — Property data, photos, geolocation
+- `inquiry` — Tenant messages
+- `review` — Property ratings
+- `saved_listing` — Bookmarks
 
 ## Deployment
 
-1. Zip the entire `rentfreely-v1.0.0` folder
-2. Upload to your Synkronus server via:
-   - Web portal: App Bundle upload page
-   - CLI: `./synk app-bundle upload rentfreely-v1.0.0.zip -a`
+```bash
+# Build bundle
+cd app && npm run build
 
-## Requirements
+# Create ODE bundle
+zip -r ../bundle/bundle.zip dist/ forms/
 
-- ODE Synkronus server
-- Formulus mobile app
-- Google Maps API key (included)
+# Upload to Synkronus
+synk app-bundle push ../bundle/bundle.zip
 
-## Technical Notes
+# Pre-bundle in Formulus APK (for release)
+cp ../bundle/bundle.zip ../../ode/formulus/android/app/src/main/assets/pre_bundle.zip
+```
 
-- Uses Google Maps JavaScript API
-- Responsive CSS with modern design
-- GPS coordinates auto-populated from map selection
-- Follows ODE v1.0 custom_app tutorial structure
+## Google Maps API
+
+Set environment variable:
+```bash
+export VITE_GOOGLE_MAPS_KEY=AIzaSyCJZZCOTkD5M21wGYbYulC4t6X-afU_osY
+```
+
+## License
+
+MIT

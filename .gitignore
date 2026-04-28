@@ -1,9 +1,1 @@
-# ODE App - Auto-generated and build files
-app/forms/
-app-bundles/
-app/node_modules/
-
-# Zip files
-*.zip
-
-# Existing ignores - preserve below
+.DS_Store
