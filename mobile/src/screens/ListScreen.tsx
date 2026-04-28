@@ -3,6 +3,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { FlatList, Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { fetchListings } from '../lib/listings';
 import { geocodePlace, PlaceSearchResult, searchPlacesWithCoordinates } from '../lib/maps';
 import { RootStackParamList } from '../navigation/AppNavigator';
@@ -71,6 +72,7 @@ export function ListScreen() {
   };
 
   return (
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
     <View style={styles.container}>
       <Text style={styles.title}>List</Text>
       <TextInput
@@ -120,10 +122,12 @@ export function ListScreen() {
         }
       />
     </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: '#fff' },
   container: { flex: 1, backgroundColor: '#fff', padding: 16 },
   title: { fontSize: 26, fontWeight: '700', marginBottom: 8 },
   search: {

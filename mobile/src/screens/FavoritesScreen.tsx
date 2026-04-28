@@ -2,6 +2,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FlatList, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { fetchFavorites } from '../lib/favorites';
 import { RootStackParamList } from '../navigation/AppNavigator';
@@ -22,14 +23,17 @@ export function FavoritesScreen() {
 
   if (!user) {
     return (
+      <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
       <View style={styles.container}>
         <Text style={styles.title}>Favorites</Text>
         <Text style={styles.message}>Sign in from Profile to save and view favorite homes.</Text>
       </View>
+      </SafeAreaView>
     );
   }
 
   return (
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
     <View style={[styles.container, isTablet && styles.containerWide]}>
       <Text style={styles.title}>Favorites</Text>
       <FlatList
@@ -53,10 +57,12 @@ export function FavoritesScreen() {
         }
       />
     </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: '#fff' },
   container: { flex: 1, backgroundColor: '#fff', padding: 16 },
   containerWide: { alignSelf: 'center', width: '85%', maxWidth: 760 },
   title: { fontSize: 24, fontWeight: '700', marginBottom: 8 },

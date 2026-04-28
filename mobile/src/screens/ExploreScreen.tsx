@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery } from '@tanstack/react-query';
@@ -13,6 +14,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MapView, { Marker, PROVIDER_GOOGLE, Region } from 'react-native-maps';
 import ClusteredMapView from 'react-native-map-clustering';
 import { fetchListings } from '../lib/listings';
@@ -26,6 +28,7 @@ const ugx = new Intl.NumberFormat('en-UG');
 export function ExploreScreen() {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const isTablet = width >= 900;
   const mapRef = useRef<any>(null);
@@ -154,22 +157,36 @@ export function ExploreScreen() {
   return (
     <View style={styles.container}>
       {mapView}
-      <View style={styles.topControls}>
+      <View style={[styles.topControls, { paddingTop: insets.top + 6 }]}>
         <View style={styles.headerRow}>
           <Text style={styles.title}>RentFreely</Text>
           <Text style={styles.badge}>{listings.length} homes</Text>
         </View>
-        <TextInput
-          value={searchText}
-          onChangeText={(text) => {
-            setSearchText(text);
-            setShowSuggestions(true);
-          }}
-          placeholder="Search place (town, area, landmark...)"
-          style={styles.search}
-          returnKeyType="search"
-          onSubmitEditing={submitSearch}
-        />
+        <View style={styles.searchRow}>
+          <TextInput
+            value={searchText}
+            onChangeText={(text) => {
+              setSearchText(text);
+              setShowSuggestions(true);
+            }}
+            placeholder="Search place (town, area, landmark...)"
+            style={styles.searchInput}
+            returnKeyType="search"
+            onSubmitEditing={submitSearch}
+          />
+          <Pressable
+            style={[styles.filterIconButton, showFilters && styles.filterIconButtonActive]}
+            onPress={() => setShowFilters((v) => !v)}
+            accessibilityRole="button"
+            accessibilityLabel={showFilters ? 'Close filters' : 'Open filters'}
+          >
+            <Ionicons
+              name={showFilters ? 'options' : 'options-outline'}
+              size={22}
+              color={showFilters ? '#fff' : '#111827'}
+            />
+          </Pressable>
+        </View>
         {showSuggestions && placesQuery.data?.length ? (
           <View style={styles.suggestions}>
             {placesQuery.data.map((item: PlaceSearchResult) => (
@@ -186,9 +203,6 @@ export function ExploreScreen() {
             ))}
           </View>
         ) : null}
-        <Pressable style={styles.filterButton} onPress={() => setShowFilters((v) => !v)}>
-          <Text style={styles.filterButtonText}>{showFilters ? 'Hide filters' : 'Show filters'}</Text>
-        </Pressable>
         {showFilters ? (
           <View style={styles.filtersPanel}>
             <TextInput
@@ -244,7 +258,13 @@ export function ExploreScreen() {
         ) : null}
       </View>
 
-      <View style={[styles.bottomTray, isTablet && styles.bottomTrayTablet]}>
+      <View
+        style={[
+          styles.bottomTray,
+          isTablet && styles.bottomTrayTablet,
+          { paddingBottom: Math.max(insets.bottom, 12) },
+        ]}
+      >
         <FlatList
           data={listings}
           keyExtractor={(item) => item.id}
@@ -283,7 +303,7 @@ export function ExploreScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   map: { ...StyleSheet.absoluteFillObject },
-  topControls: { position: 'absolute', top: 12, left: 14, right: 14 },
+  topControls: { position: 'absolute', top: 0, left: 14, right: 14 },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   title: { fontSize: 26, fontWeight: '700', color: '#111827' },
   badge: {
@@ -295,14 +315,34 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     fontWeight: '600',
   },
-  search: {
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 10,
+  },
+  searchInput: {
+    flex: 1,
     backgroundColor: '#fff',
     borderWidth: 1,
     borderColor: '#d5d9df',
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    marginBottom: 10,
+  },
+  filterIconButton: {
+    width: 46,
+    height: 46,
+    borderRadius: 12,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterIconButtonActive: {
+    backgroundColor: '#111827',
+    borderColor: '#111827',
   },
   suggestions: {
     backgroundColor: '#fff',
@@ -336,16 +376,6 @@ const styles = StyleSheet.create({
     borderColor: '#fff',
   },
   housePinText: { color: '#fff', fontSize: 12 },
-  filterButton: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 10,
-    paddingVertical: 8,
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  filterButtonText: { fontWeight: '600', color: '#111827' },
   filtersPanel: {
     backgroundColor: '#fff',
     borderWidth: 1,
@@ -377,9 +407,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    paddingBottom: 12,
   },
-  bottomTrayTablet: { paddingBottom: 16 },
+  bottomTrayTablet: {},
   listContent: { paddingHorizontal: 14, gap: 10 },
   card: {
     width: 280,

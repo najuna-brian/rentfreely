@@ -1,6 +1,7 @@
 import { RouteProp, useRoute } from '@react-navigation/native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { fetchFavorites, toggleFavorite } from '../lib/favorites';
 import { fetchListingById } from '../lib/listings';
@@ -41,21 +42,26 @@ export function ListingDetailScreen() {
 
   if (listingQuery.isLoading) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.safe} edges={['left', 'right', 'bottom']}>
+      <View style={styles.centerWrap}>
         <Text>Loading listing...</Text>
       </View>
+      </SafeAreaView>
     );
   }
 
   if (!listing) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.safe} edges={['left', 'right', 'bottom']}>
+      <View style={styles.centerWrap}>
         <Text>Listing not found.</Text>
       </View>
+      </SafeAreaView>
     );
   }
 
   return (
+    <SafeAreaView style={styles.safe} edges={['left', 'right', 'bottom']}>
     <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
       <View style={[styles.card, isTablet && styles.cardWide]}>
         <Text style={styles.title}>{listing.title}</Text>
@@ -87,10 +93,13 @@ export function ListingDetailScreen() {
         )}
       </View>
     </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: '#fff' },
+  centerWrap: { flex: 1, padding: 16, justifyContent: 'center' },
   container: { flex: 1, backgroundColor: '#fff' },
   scrollContent: { padding: 16 },
   card: { borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 14, padding: 16, gap: 10 },

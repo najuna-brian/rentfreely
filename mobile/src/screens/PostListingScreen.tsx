@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { createListing } from '../lib/listings';
@@ -55,6 +56,7 @@ export function PostListingScreen() {
   };
 
   return (
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right', 'bottom']}>
     <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
       <View style={[styles.formCard, isTablet && styles.formCardWide]}>
         <Text style={styles.title}>Post your rental property</Text>
@@ -90,10 +92,12 @@ export function PostListingScreen() {
         </Pressable>
       </View>
     </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: '#fff' },
   container: { flex: 1, backgroundColor: '#fff' },
   scrollContent: { padding: 16 },
   formCard: { borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 14, padding: 16, gap: 10 },

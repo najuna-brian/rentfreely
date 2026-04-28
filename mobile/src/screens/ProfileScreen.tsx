@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 
@@ -34,13 +35,16 @@ export function ProfileScreen() {
 
   if (loading) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+      <View style={styles.loadingWrap}>
         <Text>Loading profile...</Text>
       </View>
+      </SafeAreaView>
     );
   }
 
   return (
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
     <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
       <View style={[styles.card, isTablet && styles.cardWide]}>
         <Text style={styles.title}>Profile</Text>
@@ -80,10 +84,13 @@ export function ProfileScreen() {
         )}
       </View>
     </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: '#fff' },
+  loadingWrap: { flex: 1, padding: 16, justifyContent: 'center' },
   container: { flex: 1, backgroundColor: '#fff' },
   scrollContent: { padding: 16 },
   card: { borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 14, padding: 16, gap: 8 },
