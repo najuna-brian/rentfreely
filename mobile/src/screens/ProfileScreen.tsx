@@ -1,10 +1,13 @@
+import { CommonActions, useNavigation } from '@react-navigation/native';
 import { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
+import { clearOnboardingFlag } from '../lib/onboardingStorage';
 import { supabase } from '../lib/supabase';
 
 export function ProfileScreen() {
+  const navigation = useNavigation();
   const { width } = useWindowDimensions();
   const isTablet = width >= 900;
   const { user, loading } = useAuth();
@@ -31,6 +34,16 @@ export function ProfileScreen() {
 
   const signOut = async () => {
     await supabase.auth.signOut();
+  };
+
+  const replayIntroduction = async () => {
+    await clearOnboardingFlag();
+    navigation.getParent()?.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: 'Onboarding' }],
+      })
+    );
   };
 
   if (loading) {
@@ -82,6 +95,9 @@ export function ProfileScreen() {
             </Pressable>
           </>
         )}
+        <Pressable onPress={() => void replayIntroduction()} style={styles.linkWrap}>
+          <Text style={styles.link}>View introduction again</Text>
+        </Pressable>
       </View>
     </ScrollView>
     </SafeAreaView>
@@ -120,4 +136,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   secondaryButtonText: { color: '#111827', fontWeight: '600' },
+  linkWrap: { marginTop: 12, alignSelf: 'center', paddingVertical: 8 },
+  link: { color: '#6b7280', fontSize: 14, textDecorationLine: 'underline' },
 });
