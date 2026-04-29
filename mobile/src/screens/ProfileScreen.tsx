@@ -1,4 +1,5 @@
 import { CommonActions, useNavigation } from '@react-navigation/native';
+import * as Linking from 'expo-linking';
 import { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,7 +8,7 @@ import { clearOnboardingFlag } from '../lib/onboardingStorage';
 import { supabase } from '../lib/supabase';
 
 export function ProfileScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const { width } = useWindowDimensions();
   const isTablet = width >= 900;
   const { user, loading } = useAuth();
@@ -24,7 +25,12 @@ export function ProfileScreen() {
   };
 
   const signUp = async () => {
-    const { error } = await supabase.auth.signUp({ email, password });
+    const emailRedirectTo = Linking.createURL('auth/callback');
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo },
+    });
     if (error) {
       Alert.alert('Sign up failed', error.message);
       return;
@@ -66,12 +72,26 @@ export function ProfileScreen() {
         {user ? (
           <>
             <Text style={styles.row}>Signed in as: {user.email}</Text>
+            <Pressable
+              style={styles.secondaryButton}
+              onPress={() => navigation.navigate('CreateListing')}
+            >
+              <Text style={styles.secondaryButtonText}>List a property</Text>
+            </Pressable>
             <Pressable style={styles.button} onPress={signOut}>
               <Text style={styles.buttonText}>Sign out</Text>
             </Pressable>
           </>
         ) : (
           <>
+            <Pressable
+              style={styles.secondaryButton}
+              onPress={() =>
+                Alert.alert('Sign in required', 'Create an account or sign in first, then tap "List a property".')
+              }
+            >
+              <Text style={styles.secondaryButtonText}>List a property</Text>
+            </Pressable>
             <TextInput
               value={email}
               onChangeText={setEmail}

@@ -26,7 +26,16 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       },
     },
   },
-  plugins: ['expo-secure-store'],
+  plugins: [
+    'expo-secure-store',
+    [
+      'expo-image-picker',
+      {
+        photosPermission: 'RentFreely needs access to your photos to add listing images.',
+        cameraPermission: 'RentFreely needs camera access to take photos for your listing.',
+      },
+    ],
+  ],
   extra: {
     supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL,
     supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
