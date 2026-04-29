@@ -6,6 +6,7 @@ import { ExploreScreen } from '../screens/ExploreScreen';
 import { FavoritesScreen } from '../screens/FavoritesScreen';
 import { ListScreen } from '../screens/ListScreen';
 import { ListingDetailScreen } from '../screens/ListingDetailScreen';
+import { CreateListingWizard } from '../screens/create-listing/CreateListingWizard';
 import { OnboardingScreen } from '../screens/onboarding/OnboardingScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { isOnboardingComplete } from '../lib/onboardingStorage';
@@ -56,6 +57,11 @@ export function AppNavigator() {
     >
       <RootStack.Screen name="Onboarding" component={OnboardingScreen} />
       <RootStack.Screen name="MainTabs" component={MainTabs} />
+      <RootStack.Screen
+        name="CreateListing"
+        component={CreateListingWizard}
+        options={{ headerShown: false, presentation: 'modal' }}
+      />
       <RootStack.Screen
         name="ListingDetail"
         component={ListingDetailScreen}

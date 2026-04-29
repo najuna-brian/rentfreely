@@ -5,6 +5,7 @@ export type Listing = {
   ownerId?: string;
   title: string;
   description?: string;
+  photoPaths?: string[];
   priceUgx: number;
   bedrooms: number;
   bathrooms: number;

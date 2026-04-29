@@ -1,3 +1,4 @@
+import * as FileSystem from 'expo-file-system';
 import { supabase } from './supabase';
 import { Listing } from '../types/listing';
 import { ListingFilters } from '../types/filters';
@@ -8,6 +9,7 @@ type ListingRow = {
   owner_id: string;
   title: string;
   description: string | null;
+  photo_paths: string[] | null;
   price_ugx: number;
   bedrooms: number;
   bathrooms: number;
@@ -25,6 +27,7 @@ function mapRow(row: ListingRow): Listing {
     ownerId: row.owner_id,
     title: row.title,
     description: row.description ?? undefined,
+    photoPaths: row.photo_paths ?? undefined,
     priceUgx: row.price_ugx,
     bedrooms: row.bedrooms,
     bathrooms: row.bathrooms,
@@ -65,7 +68,7 @@ export async function fetchListings(
   let statement = supabase
     .from('listings_with_coords')
     .select(
-      'id,owner_id,title,description,price_ugx,bedrooms,bathrooms,property_type,furnished,district,address_line,latitude,longitude'
+      'id,owner_id,title,description,photo_paths,price_ugx,bedrooms,bathrooms,property_type,furnished,district,address_line,latitude,longitude'
     )
     .eq('status', 'published')
     .order('created_at', { ascending: false });
@@ -87,7 +90,7 @@ export async function fetchListingById(listingId: string): Promise<Listing | nul
   const { data, error } = await supabase
     .from('listings_with_coords')
     .select(
-      'id,owner_id,title,description,price_ugx,bedrooms,bathrooms,property_type,furnished,district,address_line,latitude,longitude'
+      'id,owner_id,title,description,photo_paths,price_ugx,bedrooms,bathrooms,property_type,furnished,district,address_line,latitude,longitude'
     )
     .eq('id', listingId)
     .maybeSingle();
@@ -101,7 +104,7 @@ export async function fetchListingById(listingId: string): Promise<Listing | nul
   return mapRow(data as ListingRow);
 }
 
-export async function createListing(payload: {
+export type CreateListingPayload = {
   title: string;
   description: string;
   priceUgx: number;
@@ -114,8 +117,30 @@ export async function createListing(payload: {
   district: string;
   latitude: number;
   longitude: number;
-}) {
-  const { error } = await supabase.rpc('create_listing', {
+};
+
+type CreateListingRpcResponse = {
+  id: string;
+};
+
+function extractInsertedId(data: CreateListingRpcResponse | CreateListingRpcResponse[] | null): string {
+  if (!data) {
+    throw new Error('Listing draft was created but no id was returned.');
+  }
+  if (Array.isArray(data)) {
+    if (!data[0]?.id) {
+      throw new Error('Unable to resolve listing id from RPC response.');
+    }
+    return data[0].id;
+  }
+  if (!data.id) {
+    throw new Error('Unable to resolve listing id from RPC response.');
+  }
+  return data.id;
+}
+
+export async function createListingDraft(payload: CreateListingPayload): Promise<string> {
+  const { data, error } = await supabase.rpc('create_listing', {
     p_title: payload.title,
     p_description: payload.description,
     p_price_ugx: payload.priceUgx,
@@ -128,10 +153,74 @@ export async function createListing(payload: {
     p_district: payload.district,
     p_latitude: payload.latitude,
     p_longitude: payload.longitude,
-    p_status: 'published',
+    p_status: 'draft',
   });
 
   if (error) {
     throw error;
   }
+  return extractInsertedId((data ?? null) as CreateListingRpcResponse | CreateListingRpcResponse[] | null);
+}
+
+function base64ToArrayBuffer(base64: string): ArrayBuffer {
+  const binary = globalThis.atob(base64);
+  const len = binary.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i += 1) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes.buffer;
+}
+
+/** Reads local / content URIs for upload. Avoids `fetch(uri)` on Android `content://` which throws "Network request failed". */
+async function readImageBytes(uri: string): Promise<ArrayBuffer> {
+  const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
+  return base64ToArrayBuffer(base64);
+}
+
+export async function uploadListingPhotos(listingId: string, photoUris: string[]): Promise<string[]> {
+  if (!photoUris.length) {
+    return [];
+  }
+
+  const uploadedPaths: string[] = [];
+
+  for (let index = 0; index < photoUris.length; index += 1) {
+    const uri = photoUris[index];
+    const ext = uri.split('.').pop()?.toLowerCase() || 'jpg';
+    const path = `${listingId}/${Date.now()}-${index}.${ext}`;
+    const body = await readImageBytes(uri);
+    const { error } = await supabase.storage.from('listing-photos').upload(path, body, {
+      contentType: `image/${ext === 'jpg' ? 'jpeg' : ext}`,
+      upsert: false,
+    });
+    if (error) {
+      throw error;
+    }
+    uploadedPaths.push(path);
+  }
+
+  const { error: updateError } = await supabase
+    .from('listings')
+    .update({ photo_paths: uploadedPaths })
+    .eq('id', listingId);
+
+  if (updateError) {
+    throw updateError;
+  }
+
+  return uploadedPaths;
+}
+
+export async function publishListing(listingId: string) {
+  const { error } = await supabase.from('listings').update({ status: 'published' }).eq('id', listingId);
+
+  if (error) {
+    throw error;
+  }
+}
+
+export async function createListing(payload: CreateListingPayload) {
+  const listingId = await createListingDraft(payload);
+  await publishListing(listingId);
 }

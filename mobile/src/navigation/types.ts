@@ -1,6 +1,7 @@
 export type RootStackParamList = {
   Onboarding: undefined;
   MainTabs: undefined;
+  CreateListing: undefined;
   ListingDetail: { listingId: string };
 };
 
