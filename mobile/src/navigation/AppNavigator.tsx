@@ -1,10 +1,11 @@
+import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
+import { BrowseScreen } from '../screens/BrowseScreen';
 import { ExploreScreen } from '../screens/ExploreScreen';
 import { FavoritesScreen } from '../screens/FavoritesScreen';
-import { ListScreen } from '../screens/ListScreen';
 import { ListingDetailScreen } from '../screens/ListingDetailScreen';
 import { CreateListingWizard } from '../screens/create-listing/CreateListingWizard';
 import { OnboardingScreen } from '../screens/onboarding/OnboardingScreen';
@@ -19,11 +20,43 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
 
 function MainTabs() {
   return (
-    <Tab.Navigator screenOptions={{ headerShown: false }}>
-      <Tab.Screen name="Explore" component={ExploreScreen} />
-      <Tab.Screen name="List" component={ListScreen} />
-      <Tab.Screen name="Favorites" component={FavoritesScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
+    <Tab.Navigator
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: '#111827',
+        tabBarInactiveTintColor: '#6b7280',
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
+        tabBarStyle: { borderTopColor: '#e5e7eb' },
+      }}
+    >
+      <Tab.Screen
+        name="Explore"
+        component={ExploreScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => <Ionicons name="map-outline" size={size} color={color} />,
+        }}
+      />
+      <Tab.Screen
+        name="Browse"
+        component={BrowseScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => <Ionicons name="list-outline" size={size} color={color} />,
+        }}
+      />
+      <Tab.Screen
+        name="Favorites"
+        component={FavoritesScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => <Ionicons name="heart-outline" size={size} color={color} />,
+        }}
+      />
+      <Tab.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => <Ionicons name="person-outline" size={size} color={color} />,
+        }}
+      />
     </Tab.Navigator>
   );
 }

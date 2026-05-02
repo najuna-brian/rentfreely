@@ -6,6 +6,7 @@ type ListingRow = {
   owner_id: string;
   title: string;
   description: string | null;
+  photo_paths: string[] | null;
   price_ugx: number;
   bedrooms: number;
   bathrooms: number;
@@ -23,6 +24,7 @@ function mapRow(row: ListingRow): Listing {
     ownerId: row.owner_id,
     title: row.title,
     description: row.description ?? undefined,
+    photoPaths: row.photo_paths ?? undefined,
     priceUgx: row.price_ugx,
     bedrooms: row.bedrooms,
     bathrooms: row.bathrooms,
@@ -53,7 +55,7 @@ export async function fetchFavorites() {
   const { data, error } = await supabase
     .from('listings_with_coords')
     .select(
-      'id,owner_id,title,description,price_ugx,bedrooms,bathrooms,property_type,furnished,district,address_line,latitude,longitude'
+      'id,owner_id,title,description,photo_paths,price_ugx,bedrooms,bathrooms,property_type,furnished,district,address_line,latitude,longitude'
     )
     .in('id', ids);
 

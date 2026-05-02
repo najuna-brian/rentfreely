@@ -9,7 +9,8 @@ type ListingRow = {
   owner_id: string;
   title: string;
   description: string | null;
-  photo_paths: string[] | null;
+  /** Present on view/RPC rows; may be absent on older RPC shapes until migrations apply. */
+  photo_paths?: string[] | null;
   price_ugx: number;
   bedrooms: number;
   bathrooms: number;

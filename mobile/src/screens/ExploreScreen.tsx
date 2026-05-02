@@ -1,9 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { CompositeNavigationProp, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   FlatList,
   Keyboard,
   Pressable,
@@ -17,21 +19,30 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MapView, { Marker, PROVIDER_GOOGLE, Region } from 'react-native-maps';
 import ClusteredMapView from 'react-native-map-clustering';
+import { ListingCardImage } from '../components/ListingCardImage';
 import { fetchListings } from '../lib/listings';
 import { geocodePlace, PlaceSearchResult, searchPlacesWithCoordinates } from '../lib/maps';
-import { RootStackParamList } from '../navigation/AppNavigator';
+import { MainTabParamList, RootStackParamList } from '../navigation/types';
 import { ListingFilters } from '../types/filters';
+import type { Listing } from '../types/listing';
 import { MapBounds } from '../types/map';
 
 const ugx = new Intl.NumberFormat('en-UG');
+const EXPLORE_CARD_WIDTH = 280;
+const EXPLORE_CARD_IMAGE_HEIGHT = 104;
+
+type ExploreNav = CompositeNavigationProp<
+  BottomTabNavigationProp<MainTabParamList, 'Explore'>,
+  NativeStackNavigationProp<RootStackParamList>
+>;
 
 export function ExploreScreen() {
-  const navigation =
-    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const navigation = useNavigation<ExploreNav>();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const isTablet = width >= 900;
   const mapRef = useRef<any>(null);
+  const boundsDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [searchText, setSearchText] = useState('');
   const [debouncedSearchText, setDebouncedSearchText] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(true);
@@ -49,9 +60,11 @@ export function ExploreScreen() {
     latitudeDelta: 5.8,
     longitudeDelta: 5.8,
   });
-  const listingsQuery = useQuery({
+  const listingsQuery = useQuery<Listing[]>({
     queryKey: ['listings', bounds, filters],
     queryFn: () => fetchListings(undefined, bounds, filters),
+    placeholderData: keepPreviousData,
+    staleTime: 20_000,
   });
   const placesQuery = useQuery({
     queryKey: ['places-rich', debouncedSearchText],
@@ -70,13 +83,29 @@ export function ExploreScreen() {
     return () => clearTimeout(timeout);
   }, [searchText]);
 
-  const updateBoundsFromRegion = (region: Region) => {
-    setRegion(region);
-    const minLat = region.latitude - region.latitudeDelta / 2;
-    const maxLat = region.latitude + region.latitudeDelta / 2;
-    const minLng = region.longitude - region.longitudeDelta / 2;
-    const maxLng = region.longitude + region.longitudeDelta / 2;
-    setBounds({ minLat, minLng, maxLat, maxLng });
+  useEffect(
+    () => () => {
+      if (boundsDebounceRef.current) {
+        clearTimeout(boundsDebounceRef.current);
+      }
+    },
+    []
+  );
+
+  /** Map region updates often; debounce bounds so the listings query key does not reset on every pan end. */
+  const scheduleBoundsFromRegion = (next: Region) => {
+    setRegion(next);
+    if (boundsDebounceRef.current) {
+      clearTimeout(boundsDebounceRef.current);
+    }
+    boundsDebounceRef.current = setTimeout(() => {
+      boundsDebounceRef.current = null;
+      const minLat = next.latitude - next.latitudeDelta / 2;
+      const maxLat = next.latitude + next.latitudeDelta / 2;
+      const minLng = next.longitude - next.longitudeDelta / 2;
+      const maxLng = next.longitude + next.longitudeDelta / 2;
+      setBounds({ minLat, minLng, maxLat, maxLng });
+    }, 450);
   };
 
   const moveToPlace = async (place: PlaceSearchResult) => {
@@ -92,7 +121,6 @@ export function ExploreScreen() {
       longitudeDelta: 0.03,
     };
     setRegion(selectedRegion);
-    // Keep imperative fallbacks for clustered map wrappers on some devices.
     mapRef.current?.animateToRegion?.(selectedRegion, 700);
     mapRef.current?.getMapRef?.()?.animateToRegion?.(selectedRegion, 700);
     mapRef.current?.getMapRef?.()?.animateCamera?.(
@@ -124,6 +152,8 @@ export function ExploreScreen() {
     }
   };
 
+  const clearFilters = () => setFilters({});
+
   const mapView = (
     <ClusteredMapView
       ref={(value) => {
@@ -136,7 +166,7 @@ export function ExploreScreen() {
       spiralEnabled={false}
       tracksViewChanges={false}
       region={region}
-      onRegionChangeComplete={updateBoundsFromRegion}
+      onRegionChangeComplete={scheduleBoundsFromRegion}
     >
       {listings.map((item) => (
         <Marker
@@ -160,8 +190,21 @@ export function ExploreScreen() {
       <View style={[styles.topControls, { paddingTop: insets.top + 6 }]}>
         <View style={styles.headerRow}>
           <Text style={styles.title}>RentFreely</Text>
-          <Text style={styles.badge}>{listings.length} homes</Text>
+          <View style={styles.headerActions}>
+            <Pressable
+              style={styles.iconGhost}
+              onPress={() => listingsQuery.refetch()}
+              accessibilityRole="button"
+              accessibilityLabel="Refresh listings on the map"
+            >
+              <Ionicons name="refresh" size={22} color="#111827" />
+            </Pressable>
+            <Text style={styles.badge}>{listings.length} homes</Text>
+          </View>
         </View>
+        {listingsQuery.isError ? (
+          <Text style={styles.errorBanner}>Could not load listings. Tap refresh or try again.</Text>
+        ) : null}
         <View style={styles.searchRow}>
           <TextInput
             value={searchText}
@@ -173,7 +216,11 @@ export function ExploreScreen() {
             style={styles.searchInput}
             returnKeyType="search"
             onSubmitEditing={submitSearch}
+            accessibilityLabel="Search place on the map"
           />
+          {placesQuery.isFetching && debouncedSearchText.length > 2 ? (
+            <ActivityIndicator style={styles.searchSpinner} color="#111827" />
+          ) : null}
           <Pressable
             style={[styles.filterIconButton, showFilters && styles.filterIconButtonActive]}
             onPress={() => setShowFilters((v) => !v)}
@@ -205,6 +252,7 @@ export function ExploreScreen() {
         ) : null}
         {showFilters ? (
           <View style={styles.filtersPanel}>
+            <Text style={styles.filterSectionLabel}>Price and size</Text>
             <TextInput
               placeholder="Min price (UGX)"
               keyboardType="numeric"
@@ -213,6 +261,7 @@ export function ExploreScreen() {
               onChangeText={(text) =>
                 setFilters((prev) => ({ ...prev, minPrice: text ? Number(text) : undefined }))
               }
+              accessibilityLabel="Minimum monthly rent in UGX"
             />
             <TextInput
               placeholder="Max price (UGX)"
@@ -222,6 +271,7 @@ export function ExploreScreen() {
               onChangeText={(text) =>
                 setFilters((prev) => ({ ...prev, maxPrice: text ? Number(text) : undefined }))
               }
+              accessibilityLabel="Maximum monthly rent in UGX"
             />
             <TextInput
               placeholder="Min bedrooms"
@@ -231,13 +281,18 @@ export function ExploreScreen() {
               onChangeText={(text) =>
                 setFilters((prev) => ({ ...prev, minBedrooms: text ? Number(text) : undefined }))
               }
+              accessibilityLabel="Minimum number of bedrooms"
             />
+            <Text style={styles.filterSectionLabel}>Property type</Text>
             <View style={styles.typeRow}>
               {(['', 'House', 'Apartment', 'Room'] as const).map((type) => (
                 <Pressable
                   key={type || 'all'}
                   style={[styles.typeChip, filters.propertyType === type && styles.typeChipActive]}
                   onPress={() => setFilters((prev) => ({ ...prev, propertyType: type }))}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: filters.propertyType === type }}
+                  accessibilityLabel={type || 'Any property type'}
                 >
                   <Text style={filters.propertyType === type ? styles.typeChipActiveText : undefined}>
                     {type || 'Any type'}
@@ -252,7 +307,26 @@ export function ExploreScreen() {
                 onValueChange={(value) =>
                   setFilters((prev) => ({ ...prev, furnished: value ? true : undefined }))
                 }
+                accessibilityLabel="Show only furnished homes"
               />
+            </View>
+            <View style={styles.filterActions}>
+              <Pressable
+                style={styles.filterSecondary}
+                onPress={clearFilters}
+                accessibilityRole="button"
+                accessibilityLabel="Clear all filters"
+              >
+                <Text style={styles.filterSecondaryText}>Clear all</Text>
+              </Pressable>
+              <Pressable
+                style={styles.filterPrimary}
+                onPress={() => setShowFilters(false)}
+                accessibilityRole="button"
+                accessibilityLabel="Done editing filters"
+              >
+                <Text style={styles.filterPrimaryText}>Done</Text>
+              </Pressable>
             </View>
           </View>
         ) : null}
@@ -271,28 +345,53 @@ export function ExploreScreen() {
           contentContainerStyle={styles.listContent}
           horizontal
           showsHorizontalScrollIndicator={false}
-          refreshing={listingsQuery.isFetching}
+          refreshing={listingsQuery.isFetching && !listingsQuery.isLoading}
           onRefresh={() => listingsQuery.refetch()}
           renderItem={({ item }) => (
             <Pressable
               style={[styles.card, isTablet && styles.cardTablet]}
               onPress={() => navigation.navigate('ListingDetail', { listingId: item.id })}
+              accessibilityRole="button"
+              accessibilityLabel={`${item.title}, ${ugx.format(item.priceUgx)} UGX per month`}
             >
-              <Text style={styles.cardTitle} numberOfLines={1}>
-                {item.title}
-              </Text>
-              <Text style={styles.cardPrice}>{ugx.format(item.priceUgx)} UGX</Text>
-              <Text style={styles.subtle}>
-                {item.bedrooms} bed • {item.bathrooms} bath • {item.district}
-              </Text>
+              <ListingCardImage
+                photoPaths={item.photoPaths}
+                width={isTablet ? 340 : EXPLORE_CARD_WIDTH}
+                height={EXPLORE_CARD_IMAGE_HEIGHT}
+              />
+              <View style={styles.cardBody}>
+                <Text style={styles.cardTitle} numberOfLines={1}>
+                  {item.title}
+                </Text>
+                <Text style={styles.cardPrice}>{ugx.format(item.priceUgx)} UGX</Text>
+                <Text style={styles.subtle}>
+                  {item.bedrooms} bed • {item.bathrooms} bath • {item.district}
+                </Text>
+              </View>
             </Pressable>
           )}
           ListEmptyComponent={
             <View style={styles.emptyChip}>
-              <Text style={styles.empty}>
-                {listingsQuery.isLoading ? 'Loading listings...' : 'No listings in this area.'}
-              </Text>
+              {listingsQuery.isLoading ? (
+                <View style={styles.emptyLoading}>
+                  <ActivityIndicator color="#111827" />
+                  <Text style={styles.empty}>Loading listings…</Text>
+                </View>
+              ) : (
+                <Text style={styles.empty}>No listings in this area.</Text>
+              )}
             </View>
+          }
+          ListFooterComponent={
+            <Pressable
+              style={styles.listFooter}
+              onPress={() => navigation.navigate('Browse')}
+              accessibilityRole="button"
+              accessibilityLabel="Open full list of homes in the Browse tab"
+            >
+              <Text style={styles.listFooterText}>Full list</Text>
+              <Ionicons name="chevron-forward" size={18} color="#111827" />
+            </Pressable>
           }
         />
       </View>
@@ -305,6 +404,17 @@ const styles = StyleSheet.create({
   map: { ...StyleSheet.absoluteFillObject },
   topControls: { position: 'absolute', top: 0, left: 14, right: 14 },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  iconGhost: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   title: { fontSize: 26, fontWeight: '700', color: '#111827' },
   badge: {
     backgroundColor: '#111827',
@@ -315,12 +425,19 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     fontWeight: '600',
   },
+  errorBanner: {
+    color: '#b45309',
+    fontSize: 13,
+    marginBottom: 8,
+    lineHeight: 18,
+  },
   searchRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     marginBottom: 10,
   },
+  searchSpinner: { marginRight: -4 },
   searchInput: {
     flex: 1,
     backgroundColor: '#fff',
@@ -385,6 +502,7 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 10,
   },
+  filterSectionLabel: { fontSize: 12, fontWeight: '700', color: '#374151' },
   filterInput: {
     borderWidth: 1,
     borderColor: '#d5d9df',
@@ -402,6 +520,22 @@ const styles = StyleSheet.create({
   },
   typeChipActive: { backgroundColor: '#111827', borderColor: '#111827' },
   typeChipActiveText: { color: '#fff' },
+  filterActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 4 },
+  filterSecondary: {
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+  },
+  filterSecondaryText: { color: '#374151', fontWeight: '600', fontSize: 14 },
+  filterPrimary: {
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 10,
+    backgroundColor: '#111827',
+  },
+  filterPrimaryText: { color: '#fff', fontWeight: '600', fontSize: 14 },
   bottomTray: {
     position: 'absolute',
     left: 0,
@@ -409,16 +543,17 @@ const styles = StyleSheet.create({
     bottom: 0,
   },
   bottomTrayTablet: {},
-  listContent: { paddingHorizontal: 14, gap: 10 },
+  listContent: { paddingHorizontal: 14, gap: 10, alignItems: 'stretch' },
   card: {
-    width: 280,
+    width: EXPLORE_CARD_WIDTH,
     borderWidth: 1,
     borderColor: '#e5e7eb',
     borderRadius: 12,
-    padding: 12,
+    overflow: 'hidden',
     backgroundColor: '#fff',
   },
   cardTablet: { width: 340 },
+  cardBody: { padding: 12, paddingTop: 10 },
   cardTitle: { fontWeight: '600', fontSize: 16, marginBottom: 4 },
   cardPrice: { fontWeight: '700', fontSize: 16, marginBottom: 2 },
   subtle: { color: '#6b7280' },
@@ -429,6 +564,24 @@ const styles = StyleSheet.create({
     borderColor: '#e5e7eb',
     paddingHorizontal: 14,
     paddingVertical: 10,
+    minHeight: 44,
+    justifyContent: 'center',
   },
+  emptyLoading: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   empty: { textAlign: 'center', color: '#6b7280' },
+  listFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    marginLeft: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    gap: 4,
+  },
+  listFooterText: { fontWeight: '700', color: '#111827', fontSize: 14 },
 });

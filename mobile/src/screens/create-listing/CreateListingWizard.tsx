@@ -15,7 +15,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE, Region } from 'react-native-maps';
+import MapView, { PROVIDER_GOOGLE, Region } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { z } from 'zod';
 import { createListingDraft, publishListing, uploadListingPhotos } from '../../lib/listings';
@@ -261,41 +261,56 @@ export function CreateListingWizard({ navigation }: Props) {
           {step === 0 ? (
             <View style={styles.card}>
               <Text style={styles.title}>Basics</Text>
+              <Text style={styles.fieldLabel}>Title</Text>
               <TextInput
                 style={styles.input}
                 value={state.title}
                 onChangeText={(title) => setState((prev) => ({ ...prev, title }))}
-                placeholder="Property title"
+                placeholder="e.g. 2-bedroom apartment near town centre"
+                accessibilityLabel="Property title"
               />
+              <Text style={styles.fieldLabel}>Monthly rent (UGX)</Text>
               <TextInput
                 style={styles.input}
                 value={state.priceUgx}
                 onChangeText={(priceUgx) => setState((prev) => ({ ...prev, priceUgx }))}
-                placeholder="Monthly rent (UGX)"
+                placeholder="Amount in Ugandan shillings"
                 keyboardType="numeric"
+                accessibilityLabel="Monthly rent in UGX"
               />
               <View style={styles.row}>
-                <TextInput
-                  style={[styles.input, styles.halfInput]}
-                  value={state.bedrooms}
-                  onChangeText={(bedrooms) => setState((prev) => ({ ...prev, bedrooms }))}
-                  placeholder="Bedrooms"
-                  keyboardType="numeric"
-                />
-                <TextInput
-                  style={[styles.input, styles.halfInput]}
-                  value={state.bathrooms}
-                  onChangeText={(bathrooms) => setState((prev) => ({ ...prev, bathrooms }))}
-                  placeholder="Bathrooms"
-                  keyboardType="numeric"
-                />
+                <View style={styles.halfInput}>
+                  <Text style={styles.fieldLabel}>Bedrooms</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={state.bedrooms}
+                    onChangeText={(bedrooms) => setState((prev) => ({ ...prev, bedrooms }))}
+                    placeholder="0–20"
+                    keyboardType="numeric"
+                    accessibilityLabel="Number of bedrooms"
+                  />
+                </View>
+                <View style={styles.halfInput}>
+                  <Text style={styles.fieldLabel}>Bathrooms</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={state.bathrooms}
+                    onChangeText={(bathrooms) => setState((prev) => ({ ...prev, bathrooms }))}
+                    placeholder="0–20"
+                    keyboardType="numeric"
+                    accessibilityLabel="Number of bathrooms"
+                  />
+                </View>
               </View>
+              <Text style={styles.fieldLabel}>Property type</Text>
               <View style={styles.typeRow}>
                 {(['House', 'Apartment', 'Room'] as const).map((type) => (
                   <Pressable
                     key={type}
                     style={[styles.typeChip, state.propertyType === type && styles.typeChipActive]}
                     onPress={() => setState((prev) => ({ ...prev, propertyType: type }))}
+                    accessibilityRole="button"
+                    accessibilityLabel={type}
                   >
                     <Text style={state.propertyType === type ? styles.typeChipTextActive : styles.typeChipText}>
                       {type}
@@ -308,6 +323,7 @@ export function CreateListingWizard({ navigation }: Props) {
                 <Switch
                   value={state.furnished}
                   onValueChange={(furnished) => setState((prev) => ({ ...prev, furnished }))}
+                  accessibilityLabel="Furnished property"
                 />
               </View>
             </View>
@@ -316,6 +332,7 @@ export function CreateListingWizard({ navigation }: Props) {
           {step === 1 ? (
             <View style={styles.card}>
               <Text style={styles.title}>Details</Text>
+              <Text style={styles.fieldLabel}>Description</Text>
               <TextInput
                 style={[styles.input, styles.multiInput]}
                 value={state.description}
@@ -323,6 +340,7 @@ export function CreateListingWizard({ navigation }: Props) {
                 placeholder="Describe the home, nearby places, and rental terms"
                 multiline
                 textAlignVertical="top"
+                accessibilityLabel="Property description"
               />
             </View>
           ) : null}
@@ -330,51 +348,59 @@ export function CreateListingWizard({ navigation }: Props) {
           {step === 2 ? (
             <View style={styles.card}>
               <Text style={styles.title}>Location</Text>
+              <Text style={styles.fieldLabel}>Street address</Text>
               <TextInput
                 style={styles.input}
                 value={state.address}
                 onChangeText={(address) => setState((prev) => ({ ...prev, address }))}
                 placeholder="Address line"
+                accessibilityLabel="Street address"
               />
               <View style={styles.row}>
-                <TextInput
-                  style={[styles.input, styles.halfInput]}
-                  value={state.district}
-                  onChangeText={(district) => setState((prev) => ({ ...prev, district }))}
-                  placeholder="District"
-                />
-                <TextInput
-                  style={[styles.input, styles.halfInput]}
-                  value={state.city}
-                  onChangeText={(city) => setState((prev) => ({ ...prev, city }))}
-                  placeholder="City"
-                />
+                <View style={styles.halfInput}>
+                  <Text style={styles.fieldLabel}>District</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={state.district}
+                    onChangeText={(district) => setState((prev) => ({ ...prev, district }))}
+                    placeholder="District"
+                    accessibilityLabel="District"
+                  />
+                </View>
+                <View style={styles.halfInput}>
+                  <Text style={styles.fieldLabel}>City</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={state.city}
+                    onChangeText={(city) => setState((prev) => ({ ...prev, city }))}
+                    placeholder="City"
+                    accessibilityLabel="City"
+                  />
+                </View>
               </View>
-              <Text style={styles.subtle}>Drag the pin to the exact property location</Text>
-              <MapView
-                provider={PROVIDER_GOOGLE}
-                style={styles.map}
-                region={region}
-                onRegionChangeComplete={(nextRegion) =>
-                  setState((prev) => ({
-                    ...prev,
-                    latitude: nextRegion.latitude,
-                    longitude: nextRegion.longitude,
-                  }))
-                }
-              >
-                <Marker
-                  draggable
-                  coordinate={{ latitude: state.latitude, longitude: state.longitude }}
-                  onDragEnd={(event) =>
+              <Text style={styles.subtle}>
+                Pan and zoom the map so the pin sits on your property entrance. Coordinates update from the map
+                center.
+              </Text>
+              <View style={styles.mapShell}>
+                <MapView
+                  provider={PROVIDER_GOOGLE}
+                  style={styles.map}
+                  region={region}
+                  onRegionChangeComplete={(nextRegion) =>
                     setState((prev) => ({
                       ...prev,
-                      latitude: event.nativeEvent.coordinate.latitude,
-                      longitude: event.nativeEvent.coordinate.longitude,
+                      latitude: nextRegion.latitude,
+                      longitude: nextRegion.longitude,
                     }))
                   }
+                  accessibilityLabel="Map to set property location"
                 />
-              </MapView>
+                <View style={styles.mapCrosshair} pointerEvents="none">
+                  <View style={styles.crosshairRing} />
+                  <View style={styles.crosshairDot} />
+                </View>
+              </View>
             </View>
           ) : null}
 
@@ -401,8 +427,23 @@ export function CreateListingWizard({ navigation }: Props) {
                 </Pressable>
               </View>
               <View style={styles.photoGrid}>
-                {state.photos.map((uri) => (
-                  <Image key={uri} source={{ uri }} style={styles.photo} />
+                {state.photos.map((uri, index) => (
+                  <View key={`${index}-${uri}`} style={styles.photoTile}>
+                    <Image source={{ uri }} style={styles.photo} accessibilityLabel="Listing photo preview" />
+                    <Pressable
+                      style={styles.removePhotoBtn}
+                      onPress={() =>
+                        setState((prev) => ({
+                          ...prev,
+                          photos: prev.photos.filter((_, i) => i !== index),
+                        }))
+                      }
+                      accessibilityRole="button"
+                      accessibilityLabel="Remove photo"
+                    >
+                      <Text style={styles.removePhotoText}>×</Text>
+                    </Pressable>
+                  </View>
                 ))}
               </View>
             </View>
@@ -421,7 +462,7 @@ export function CreateListingWizard({ navigation }: Props) {
                 {state.address}, {state.district}, {state.city}
               </Text>
               <Text style={styles.reviewLine}>{state.photos.length} photos ready</Text>
-              <Text style={styles.subtle}>Publishing will make this listing visible in Explore and List.</Text>
+              <Text style={styles.subtle}>Publishing will make this listing visible in Explore and Browse.</Text>
             </View>
           ) : null}
         </ScrollView>
@@ -468,6 +509,7 @@ const styles = StyleSheet.create({
   content: { padding: 16 },
   card: { borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 14, padding: 14, gap: 10 },
   title: { fontSize: 22, fontWeight: '700', marginBottom: 4 },
+  fieldLabel: { fontSize: 13, fontWeight: '600', color: '#374151' },
   input: {
     borderWidth: 1,
     borderColor: '#d5d9df',
@@ -477,7 +519,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   multiInput: { minHeight: 120 },
-  row: { flexDirection: 'row', gap: 8 },
+  row: { flexDirection: 'row', gap: 8, alignItems: 'flex-start' },
   halfInput: { flex: 1 },
   typeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   typeChip: {
@@ -491,7 +533,35 @@ const styles = StyleSheet.create({
   typeChipText: { color: '#111827' },
   typeChipTextActive: { color: '#fff' },
   switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  map: { height: 220, borderRadius: 12 },
+  mapShell: {
+    height: 220,
+    borderRadius: 12,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  map: { ...StyleSheet.absoluteFillObject },
+  mapCrosshair: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  crosshairRing: {
+    position: 'absolute',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 3,
+    borderColor: '#111827',
+    backgroundColor: 'rgba(255,255,255,0.35)',
+  },
+  crosshairDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#111827',
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
   subtle: { color: '#6b7280', lineHeight: 20 },
   secondaryButton: {
     borderWidth: 1,
@@ -504,7 +574,20 @@ const styles = StyleSheet.create({
   photoSourceRow: { flexDirection: 'row', gap: 8 },
   photoSourceHalf: { flex: 1 },
   photoGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  photo: { width: 92, height: 92, borderRadius: 10 },
+  photoTile: { position: 'relative' },
+  photo: { width: 92, height: 92, borderRadius: 10, backgroundColor: '#f3f4f6' },
+  removePhotoBtn: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(17,24,39,0.88)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  removePhotoText: { color: '#fff', fontSize: 20, lineHeight: 22, fontWeight: '700', marginTop: -2 },
   reviewLine: { color: '#111827', lineHeight: 22 },
   footer: { paddingHorizontal: 16, paddingBottom: 16, paddingTop: 8 },
   button: {

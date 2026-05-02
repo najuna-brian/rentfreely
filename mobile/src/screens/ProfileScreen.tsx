@@ -1,15 +1,33 @@
-import { CommonActions, useNavigation } from '@react-navigation/native';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { CommonActions, CompositeNavigationProp, useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Linking from 'expo-linking';
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { clearOnboardingFlag } from '../lib/onboardingStorage';
 import { enableLandlordRole, ensureTenantProfile, getMyProfile } from '../lib/profile';
 import { supabase } from '../lib/supabase';
+import { MainTabParamList, RootStackParamList } from '../navigation/types';
+
+type ProfileNav = CompositeNavigationProp<
+  BottomTabNavigationProp<MainTabParamList, 'Profile'>,
+  NativeStackNavigationProp<RootStackParamList>
+>;
 
 export function ProfileScreen() {
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<ProfileNav>();
   const { width } = useWindowDimensions();
   const isTablet = width >= 900;
   const { user, loading } = useAuth();
@@ -104,7 +122,10 @@ export function ProfileScreen() {
         return;
       }
     }
-    Alert.alert('Account created', 'You are signed up as a tenant. Enable landlord mode in profile settings when ready.');
+    Alert.alert(
+      'Account created',
+      'You are signed up as a tenant. Enable landlord mode below when you want to post rentals.'
+    );
   };
 
   const signOut = async () => {
@@ -190,149 +211,186 @@ export function ProfileScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
-      <View style={styles.loadingWrap}>
-        <Text>Loading profile...</Text>
-      </View>
+        <View style={styles.loadingWrap}>
+          <ActivityIndicator size="large" color="#111827" />
+          <Text style={styles.loadingText}>Loading profile…</Text>
+        </View>
       </SafeAreaView>
     );
   }
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
-    <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
-      <View style={[styles.card, isTablet && styles.cardWide]}>
-        <Text style={styles.title}>Profile</Text>
-        <Text style={styles.row}>
-          Account type: {canListProperty ? 'Tenant + Landlord' : 'Tenant'}
-        </Text>
-        <Text style={styles.row}>
-          {canListProperty
-            ? 'You can search rentals and post properties.'
-            : 'New accounts start as tenant. Enable landlord to post properties.'}
-        </Text>
-        {user ? (
-          <>
-            <Text style={styles.row}>Signed in as: {user.email ?? 'Google account'}</Text>
-            <TextInput
-              value={username}
-              onChangeText={setUsername}
-              placeholder="Username"
-              style={styles.input}
-              autoCapitalize="none"
-            />
-            <TextInput
-              value={phone}
-              onChangeText={setPhone}
-              placeholder="Phone (+256...)"
-              style={styles.input}
-              keyboardType="phone-pad"
-            />
-            <TextInput
-              value={email}
-              onChangeText={setEmail}
-              placeholder="Email"
-              style={styles.input}
-              autoCapitalize="none"
-              keyboardType="email-address"
-            />
-            <Pressable style={styles.secondaryButton} onPress={() => void saveProfile()} disabled={isSavingProfile}>
-              <Text style={styles.secondaryButtonText}>
-                {isSavingProfile ? 'Saving profile...' : 'Save profile details'}
-              </Text>
-            </Pressable>
-            {!canListProperty ? (
-              <Pressable
-                style={styles.secondaryButton}
-                onPress={() => void activateLandlord()}
-                disabled={isEnablingLandlord || profileLoading}
-              >
-                <Text style={styles.secondaryButtonText}>
-                  {isEnablingLandlord ? 'Enabling landlord...' : 'Enable landlord account'}
+      <View style={styles.wrap}>
+        <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+          <View style={[styles.card, isTablet && styles.cardWide]}>
+            <Text style={styles.title}>Profile</Text>
+            {user ? (
+              <>
+                <Text style={styles.row}>
+                  Account type: {canListProperty ? 'Tenant + Landlord' : 'Tenant'}
                 </Text>
-              </Pressable>
-            ) : null}
-            <Pressable
-              style={styles.secondaryButton}
-              onPress={() =>
-                canListProperty
-                  ? navigation.navigate('CreateListing')
-                  : Alert.alert('Landlord account required', 'Enable landlord account first in profile settings.')
-              }
-            >
-              <Text style={styles.secondaryButtonText}>List a property</Text>
+                <Text style={styles.row}>
+                  {canListProperty
+                    ? 'You can search rentals and post properties.'
+                    : 'New accounts start as tenant. Enable landlord to post properties.'}
+                </Text>
+                <Text style={styles.row}>Signed in as: {user.email ?? 'Google account'}</Text>
+                <Text style={styles.label}>Username</Text>
+                <TextInput
+                  value={username}
+                  onChangeText={setUsername}
+                  placeholder="How we should address you"
+                  style={styles.input}
+                  autoCapitalize="none"
+                  editable={!profileLoading}
+                  accessibilityLabel="Username"
+                />
+                <Text style={styles.label}>Phone</Text>
+                <TextInput
+                  value={phone}
+                  onChangeText={setPhone}
+                  placeholder="+256…"
+                  style={styles.input}
+                  keyboardType="phone-pad"
+                  editable={!profileLoading}
+                  accessibilityLabel="Phone number"
+                />
+                <Text style={styles.label}>Email</Text>
+                <TextInput
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="you@example.com"
+                  style={styles.input}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  editable={!profileLoading}
+                  accessibilityLabel="Email address"
+                />
+                <Pressable
+                  style={[styles.secondaryButton, profileLoading && styles.buttonMuted]}
+                  onPress={() => void saveProfile()}
+                  disabled={isSavingProfile || profileLoading}
+                >
+                  <Text style={styles.secondaryButtonText}>
+                    {isSavingProfile ? 'Saving profile…' : 'Save profile details'}
+                  </Text>
+                </Pressable>
+                {!canListProperty ? (
+                  <Pressable
+                    style={[styles.secondaryButton, profileLoading && styles.buttonMuted]}
+                    onPress={() => void activateLandlord()}
+                    disabled={isEnablingLandlord || profileLoading}
+                  >
+                    <Text style={styles.secondaryButtonText}>
+                      {isEnablingLandlord ? 'Enabling landlord…' : 'Enable landlord account'}
+                    </Text>
+                  </Pressable>
+                ) : null}
+                <Pressable
+                  style={styles.primaryAlt}
+                  onPress={() =>
+                    canListProperty
+                      ? navigation.navigate('CreateListing')
+                      : Alert.alert(
+                          'Landlord account required',
+                          'Enable landlord account first, then you can list a property.'
+                        )
+                  }
+                >
+                  <Text style={styles.primaryAltText}>List a property</Text>
+                </Pressable>
+                <Pressable style={styles.button} onPress={signOut}>
+                  <Text style={styles.buttonText}>Sign out</Text>
+                </Pressable>
+              </>
+            ) : (
+              <>
+                <Text style={styles.row}>
+                  Create an account to save homes and unlock landlord tools. Use the same email you will share with
+                  renters.
+                </Text>
+                <Text style={styles.label}>Username</Text>
+                <TextInput
+                  value={username}
+                  onChangeText={setUsername}
+                  placeholder="How we should address you"
+                  style={styles.input}
+                  autoCapitalize="none"
+                  accessibilityLabel="Username"
+                />
+                <Text style={styles.label}>Phone</Text>
+                <TextInput
+                  value={phone}
+                  onChangeText={setPhone}
+                  placeholder="+256…"
+                  style={styles.input}
+                  keyboardType="phone-pad"
+                  accessibilityLabel="Phone number"
+                />
+                <Text style={styles.label}>Email</Text>
+                <TextInput
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="you@example.com"
+                  style={styles.input}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  accessibilityLabel="Email address"
+                />
+                <Text style={styles.label}>Password</Text>
+                <TextInput
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="At least 6 characters"
+                  style={styles.input}
+                  secureTextEntry
+                  accessibilityLabel="Password"
+                />
+                <Pressable style={styles.button} onPress={signIn}>
+                  <Text style={styles.buttonText}>Sign in</Text>
+                </Pressable>
+                <Pressable style={styles.secondaryButton} onPress={signUp}>
+                  <Text style={styles.secondaryButtonText}>Create tenant account</Text>
+                </Pressable>
+                <Pressable style={styles.secondaryButton} onPress={() => void signInWithGoogle()}>
+                  <Text style={styles.secondaryButtonText}>Continue with Google</Text>
+                </Pressable>
+                <Text style={styles.hint}>
+                  Want to list a property? After you sign in, enable landlord mode on this screen, then use “List a
+                  property.”
+                </Text>
+              </>
+            )}
+            <Pressable onPress={() => void replayIntroduction()} style={styles.linkWrap}>
+              <Text style={styles.link}>View introduction again</Text>
             </Pressable>
-            <Pressable style={styles.button} onPress={signOut}>
-              <Text style={styles.buttonText}>Sign out</Text>
-            </Pressable>
-          </>
-        ) : (
-          <>
-            <Pressable
-              style={styles.secondaryButton}
-              onPress={() =>
-                Alert.alert('Sign in required', 'Create an account or sign in first, then tap "List a property".')
-              }
-            >
-              <Text style={styles.secondaryButtonText}>List a property</Text>
-            </Pressable>
-            <TextInput
-              value={username}
-              onChangeText={setUsername}
-              placeholder="Username"
-              style={styles.input}
-              autoCapitalize="none"
-            />
-            <TextInput
-              value={phone}
-              onChangeText={setPhone}
-              placeholder="Phone (+256...)"
-              style={styles.input}
-              keyboardType="phone-pad"
-            />
-            <TextInput
-              value={email}
-              onChangeText={setEmail}
-              placeholder="Email"
-              style={styles.input}
-              autoCapitalize="none"
-              keyboardType="email-address"
-            />
-            <TextInput
-              value={password}
-              onChangeText={setPassword}
-              placeholder="Password"
-              style={styles.input}
-              secureTextEntry
-            />
-            <Pressable style={styles.button} onPress={signIn}>
-              <Text style={styles.buttonText}>Sign in</Text>
-            </Pressable>
-            <Pressable style={styles.secondaryButton} onPress={signUp}>
-              <Text style={styles.secondaryButtonText}>Create tenant account</Text>
-            </Pressable>
-            <Pressable style={styles.secondaryButton} onPress={() => void signInWithGoogle()}>
-              <Text style={styles.secondaryButtonText}>Continue with Google</Text>
-            </Pressable>
-          </>
-        )}
-        <Pressable onPress={() => void replayIntroduction()} style={styles.linkWrap}>
-          <Text style={styles.link}>View introduction again</Text>
-        </Pressable>
+          </View>
+        </ScrollView>
+        {profileLoading && user ? (
+          <View style={styles.profileOverlay} pointerEvents="auto">
+            <ActivityIndicator size="large" color="#111827" />
+            <Text style={styles.overlayText}>Loading profile…</Text>
+          </View>
+        ) : null}
       </View>
-    </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#fff' },
-  loadingWrap: { flex: 1, padding: 16, justifyContent: 'center' },
+  wrap: { flex: 1 },
+  loadingWrap: { flex: 1, padding: 16, justifyContent: 'center', alignItems: 'center', gap: 12 },
+  loadingText: { color: '#4b5563' },
   container: { flex: 1, backgroundColor: '#fff' },
   scrollContent: { padding: 16 },
   card: { borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 14, padding: 16, gap: 8 },
   cardWide: { alignSelf: 'center', width: '85%', maxWidth: 760 },
   title: { fontSize: 24, fontWeight: '700', marginBottom: 8 },
   row: { color: '#4b5563', lineHeight: 20 },
+  label: { fontSize: 13, fontWeight: '600', color: '#374151', marginTop: 4, marginBottom: 2 },
+  hint: { color: '#6b7280', fontSize: 14, lineHeight: 20, marginTop: 8 },
   input: {
     borderWidth: 1,
     borderColor: '#d5d9df',
@@ -356,6 +414,23 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   secondaryButtonText: { color: '#111827', fontWeight: '600' },
+  primaryAlt: {
+    marginTop: 4,
+    backgroundColor: '#111827',
+    borderRadius: 10,
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  primaryAltText: { color: '#fff', fontWeight: '600' },
+  buttonMuted: { opacity: 0.45 },
   linkWrap: { marginTop: 12, alignSelf: 'center', paddingVertical: 8 },
   link: { color: '#6b7280', fontSize: 14, textDecorationLine: 'underline' },
+  profileOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255,255,255,0.82)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 10,
+  },
+  overlayText: { color: '#4b5563', fontSize: 15 },
 });

@@ -14,6 +14,7 @@ export default function App() {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <NavigationContainer>
+            {/* Surfaces are light; use dark status-bar icons for contrast. */}
             <StatusBar style="dark" />
             <AppNavigator />
           </NavigationContainer>

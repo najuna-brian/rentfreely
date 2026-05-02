@@ -1,13 +1,13 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useRef, useState } from 'react';
 import {
-  Dimensions,
   NativeScrollEvent,
   NativeSyntheticEvent,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -28,8 +28,8 @@ const STEPS = [
     accent: '🗺️',
   },
   {
-    title: 'Search the list',
-    body: 'Use the List tab to search by town or landmark and browse results in a clear, scannable list.',
+    title: 'Browse in a list',
+    body: 'Use the Browse tab to search by town or landmark and scroll results with photos in a clear, scannable list.',
     accent: '📋',
   },
   {
@@ -40,7 +40,7 @@ const STEPS = [
 ];
 
 export function OnboardingScreen({ navigation }: Props) {
-  const width = Dimensions.get('window').width;
+  const { width } = useWindowDimensions();
   const scrollRef = useRef<ScrollView>(null);
   const [step, setStep] = useState(0);
 
